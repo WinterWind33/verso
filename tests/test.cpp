@@ -20,7 +20,7 @@ void Test::register_test(std::unique_ptr<Test> test) {
     s_all_tests.push_back(std::move(test));
 }
 
-void Test::lock_registration() {
+void Test::lock_registration() noexcept {
     s_registration_locked = true;
 }
 

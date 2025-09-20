@@ -54,8 +54,13 @@ public:
      *  This is useful to prevent tests from being registered after
      *  the test runner has started running the tests.
      */
-    static void lock_registration();
+    static void lock_registration() noexcept;
 
+    /**
+     * @brief Retrieves the name of the test.
+     *
+     * @return The name of the test.
+     */
     [[nodiscard]] std::string_view name() const noexcept {
         return m_name;
     }
@@ -66,10 +71,20 @@ public:
      */
     virtual void run() = 0;
 
+    /**
+     * @brief Checks if the test succeeded.
+     *
+     * @return true if the test succeeded, false otherwise.
+     */
     [[nodiscard]] bool succeeded() const noexcept {
         return m_result;
     }
 
+    /**
+     * @brief Retrieves the failure reasons of the test.
+     *
+     * @return A constant reference to the vector containing the failure reasons.
+     */
     [[nodiscard]] const auto& get_failure_reasons() const noexcept {
         return m_failure_reasons;
     }
@@ -142,9 +157,19 @@ private:
     std::vector<std::string> m_failure_reasons{};
 };
 
+/**
+ * @brief Concept for types derived from Test.
+ *
+ * @tparam TestType The type to test.
+ */
 template <typename TestType>
 concept TestClass = std::derived_from<TestType, Test>;
 
+/**
+ * @brief Helper class to register a test at static initialization time.
+ *
+ * @tparam TestType The type of the test to register.
+ */
 template <TestClass TestType>
 class TestRegistrar {
 public:
@@ -159,6 +184,9 @@ public:
     namespace {                                                    \
     static ::verso::tests::TestRegistrar<TestType> InstanceName{}; \
     }
+/**
+ * @brief Macro to automatically register a test class.
+ */
 #define VERSO_REGISTER_TEST(TestType) \
     VERSO_REGISTER_TEST_DETAIL(TestType, CONCATENATE(g_testRegistrarInstance_, TestType))
 
