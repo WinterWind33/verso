@@ -4,6 +4,26 @@
 // C++ STL
 #include <stdexcept>
 
+class TestTest : public verso::tests::Test {
+public:
+    TestTest() : verso::tests::Test("TestTest") {}
+
+    void run() override {
+        // Test that the test_true assertion works correctly.
+        test_true("True condition should pass", true);
+        test_true("False condition should fail", false);
+        test_false("False condition should pass", false);
+        test_false("True condition should fail", true);
+        test_equal("Equal integers should pass", 42, 42);
+        test_equal("Unequal integers should fail", 42, 43);
+        test_not_equal("Unequal integers should pass", 42, 43);
+        test_not_equal("Equal integers should fail", 42, 42);
+        test_equal("Equal strings should pass", std::string("hello"), std::string("hello"));
+        test_equal("Unequal strings should fail", std::string_view("hello"),
+                   std::string_view("world"));
+    }
+};
+
 namespace verso::tests {
 
 std::vector<std::unique_ptr<Test>> Test::s_all_tests{};

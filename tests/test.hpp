@@ -13,12 +13,21 @@
 namespace verso::tests {
 
 /**
- * @brief Concept for types that can be printed using std::to_string.
+ * @brief Concept for string types.
  *
- * @tparam Type The type to test.
+ * @tparam Type The type to check.
  */
 template <typename Type>
-concept PrintableType = requires {
+concept StringType = std::same_as<Type, std::string> || std::same_as<Type, char*> ||
+                     std::same_as<Type, std::string_view>;
+
+/**
+ * @brief Concept for types that can be printed using std::to_string.
+ *
+ * @tparam Type The type to check.
+ */
+template <typename Type>
+concept PrintableNonStringType = !StringType<Type> && requires {
     { std::to_string(std::declval<Type>()) } -> std::convertible_to<std::string>;
 };
 
@@ -125,7 +134,25 @@ public:
      * @param actual The actual value
      */
     template <typename Type>
-        requires std::equality_comparable<Type> && PrintableType<Type>
+        requires StringType<Type>
+    void test_equal(const std::string_view what, const Type& expected, const Type& actual) {
+        if (expected != actual) {
+            m_failure_reasons.push_back(
+                std::format("{}. Expected: '{}', Actual: '{}'", what, expected, actual));
+            m_result = false;
+        }
+    }
+
+    /**
+     * @brief Asserts that the two given values are equal.
+     *
+     * @tparam Type The type of the values to compare.
+     * @param what The description of the test.
+     * @param expected The expected value
+     * @param actual The actual value
+     */
+    template <typename Type>
+        requires std::equality_comparable<Type> && PrintableNonStringType<Type>
     void test_equal(const std::string_view what, const Type& expected, const Type& actual) {
         if (expected != actual) {
             m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
@@ -144,7 +171,25 @@ public:
      * @param actual The actual value
      */
     template <typename Type>
-        requires std::equality_comparable<Type> && PrintableType<Type>
+        requires StringType<Type>
+    void test_not_equal(const std::string_view what, const Type& expected, const Type& actual) {
+        if (expected == actual) {
+            m_failure_reasons.push_back(
+                std::format("{}. Expected: '{}', Actual: '{}'", what, expected, actual));
+            m_result = false;
+        }
+    }
+
+    /**
+     * @brief Asserts that the two given values are not equal.
+     *
+     * @tparam Type The type of the values to compare.
+     * @param what The description of the test.
+     * @param expected The expected value
+     * @param actual The actual value
+     */
+    template <typename Type>
+        requires std::equality_comparable<Type> && PrintableNonStringType<Type>
     void test_not_equal(const std::string_view what, const Type& expected, const Type& actual) {
         if (expected == actual) {
             m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
