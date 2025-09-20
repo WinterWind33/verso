@@ -14,7 +14,7 @@ void print_help() {
     std::cout << ENDL;
     std::cout << "-h, --help\tPrints this help page" << ENDL;
     std::cout << "--verbose\tPrints verbose logging" << ENDL;
-    std::cout << "-S  \tPrint successful tests (off by default)" << ENDL;
+    std::cout << "-S\t\tPrint successful tests (off by default)" << ENDL;
 }
 } // namespace verso::tests
 
