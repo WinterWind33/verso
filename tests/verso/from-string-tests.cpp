@@ -13,8 +13,7 @@ class FromStringTests final : public Test {
 public:
     FromStringTests() : Test{"from_string function tests"} {}
 
-    void run() override {
-        // Empty string
+    void run() override { // Empty string
         {
             const auto result{from_string<version>("")};
             test_false("Result from empty string should be nullopt", result.has_value());
@@ -45,6 +44,116 @@ public:
                 test_true("Patch version should be 30", result->patch() == 30);
             }
         }
+
+        // Invalid version strings
+        {
+            constexpr std::string_view testStr{"1.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        // Valid but unsupported semantic versions
+        {
+            constexpr std::string_view testStr{"1.0.0-alpha"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.0-beta"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.0+build.1"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        // Missing components
+        {
+            constexpr std::string_view testStr{"1..0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0."};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{".1.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        // Leading zeros
+        {
+            constexpr std::string_view testStr{"01.0.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.01.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.01"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        // Non-numeric characters
+        {
+            constexpr std::string_view testStr{"a.b.c"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.b.3"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.2.c"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        // Negative numbers (not possible with unsigned types)
+        // as per semantic versioning specification
+        {
+            constexpr std::string_view testStr{"-1.0.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.-1.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.-1"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        // too much dots
+        {
+            constexpr std::string_view testStr{"1.0.0.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"...1.0.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.0..."};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+    }
+
+private:
+    void test_is_nullopt(const std::string_view versionString, const std::optional<version>& opt) {
+        test_false("Result from \'" + std::string(versionString) + "\' should be nullopt",
+                   opt.has_value());
     }
 };
 
