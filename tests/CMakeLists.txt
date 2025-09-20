@@ -9,6 +9,7 @@ set(VERSO_TESTS_SOURCE_FILES
 
     # Verso test files
     verso/static-tests.cpp
+    verso/from-string-tests.cpp
 )
 
 add_executable(verso-tests ${VERSO_TESTS_SOURCE_FILES})
