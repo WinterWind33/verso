@@ -11,31 +11,86 @@
 
 namespace verso::tests {
 
+/**
+ * @brief Default name for unnamed tests.
+ */
 constexpr std::string_view TESTS_DEFAULT_NAME{"Unnamed Test"};
 
 class Test {
 public:
-    Test() noexcept = default;
+    [[nodiscard]] static const std::vector<std::unique_ptr<Test>>& get_all_tests() noexcept {
+        return s_all_tests;
+    }
+
+    static void register_test(std::unique_ptr<Test> test);
 
     [[nodiscard]] std::string_view name() const noexcept {
         return m_name;
     }
 
+    /**
+     * @brief To be implemented by the derived class to run the test. This method
+     *  defines the test logic.
+     */
     virtual void run() = 0;
 
     [[nodiscard]] bool succeeded() const noexcept {
         return m_result;
     }
 
-    const auto& get_failure_reasons() const noexcept {
+    [[nodiscard]] const auto& get_failure_reasons() const noexcept {
         return m_failure_reasons;
     }
 
-    static const std::vector<std::unique_ptr<Test>>& get_all_tests() noexcept {
-        return s_all_tests;
+    // ### Assertions ###
+
+    /**
+     * @brief Asserts that the given condition is true.
+     *
+     * @param what The description of the test.
+     * @param condition The condition to test.
+     */
+    void test_true(std::string_view what, bool condition);
+
+    /**
+     * @brief Asserts that the given condition is false.
+     *
+     * @param what The description of the test.
+     * @param condition The condition to test.
+     */
+    void test_false(std::string_view what, bool condition);
+
+    /**
+     * @brief Asserts that the two given values are equal.
+     *
+     * @tparam Type The type of the values to compare.
+     * @param what The description of the test.
+     * @param lhs The first value to compare
+     * @param rhs The second value to compare
+     */
+    template <std::equality_comparable Type>
+    void test_equal(std::string_view what, const Type& lhs, const Type& rhs) {
+        if (lhs != rhs) {
+            m_failure_reasons.emplace_back(what);
+            m_result = false;
+        }
     }
 
-    static void register_test(std::unique_ptr<Test> test);
+    /**
+     * @brief Asserts that the two given values are not equal.
+     *
+     * @tparam Type The type of the values to compare.
+     * @param what The description of the test.
+     * @param lhs The first value to compare
+     * @param rhs The second value to compare
+     */
+    template <std::equality_comparable Type>
+    void test_not_equal(std::string_view what, const Type& lhs, const Type& rhs) {
+        if (lhs == rhs) {
+            m_failure_reasons.emplace_back(what);
+            m_result = false;
+        }
+    }
 
 protected:
     std::string m_name{TESTS_DEFAULT_NAME};
