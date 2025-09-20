@@ -18,8 +18,7 @@ namespace verso::tests {
  * @tparam Type The type to check.
  */
 template <typename Type>
-concept StringType = std::same_as<Type, std::string> || std::same_as<Type, char*> ||
-                     std::same_as<Type, std::string_view>;
+concept StringType = std::same_as<Type, std::string> || std::same_as<Type, std::string_view>;
 
 /**
  * @brief Concept for types that can be printed using std::to_string.
