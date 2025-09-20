@@ -12,6 +12,7 @@ set(VERSO_TESTS_SOURCE_FILES
     verso/basic-version-tests.cpp
     verso/from-string-tests.cpp
     verso/to-string-tests.cpp
+    verso/comparison-operators-tests.cpp
 )
 
 add_executable(verso-tests ${VERSO_TESTS_SOURCE_FILES})
