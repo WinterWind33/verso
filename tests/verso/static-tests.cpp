@@ -59,7 +59,8 @@ static_assert(Version<version64>);
 
 namespace components_function_tests {
 static_assert(std::same_as<decltype(components(version{})),
-                           std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>>);
+                           std::tuple<default_normal_version_number, default_normal_version_number,
+                                      default_normal_version_number>>);
 static_assert(std::get<0>(components(version{1, 2, 3})) == 1);
 static_assert(std::get<1>(components(version{1, 2, 3})) == 2);
 static_assert(std::get<2>(components(version{1, 2, 3})) == 3);
