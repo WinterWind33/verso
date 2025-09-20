@@ -25,14 +25,14 @@ void Test::lock_registration() noexcept {
     s_registration_locked = true;
 }
 
-void Test::test_true(std::string_view what, bool condition) {
+void Test::test_true(const std::string_view what, const bool condition) {
     if (!condition) {
         m_failure_reasons.emplace_back(what);
         m_result = false;
     }
 }
 
-void Test::test_false(std::string_view what, bool condition) {
+void Test::test_false(const std::string_view what, const bool condition) {
     if (condition) {
         m_failure_reasons.emplace_back(what);
         m_result = false;

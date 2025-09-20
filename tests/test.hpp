@@ -13,11 +13,6 @@
 namespace verso::tests {
 
 /**
- * @brief Default name for unnamed tests.
- */
-constexpr std::string_view TESTS_DEFAULT_NAME{"Unnamed Test"};
-
-/**
  * @brief Concept for types that can be printed using std::to_string.
  *
  * @tparam Type The type to test.
@@ -32,6 +27,20 @@ concept PrintableType = requires {
  */
 class Test {
 public:
+    virtual ~Test() noexcept = default;
+
+    /**
+     * @brief Construct a new test class with the given test name.
+     *  This constructor will throw an exception if the test name is empty.
+     *
+     * @param testName The name of the test.
+     */
+    explicit Test(const std::string_view testName) : m_name{testName} {
+        if (m_name.empty()) {
+            throw std::invalid_argument("The test name cannot be empty.");
+        }
+    }
+
     /**
      * @brief Get the all tests object
      *
@@ -117,7 +126,7 @@ public:
      */
     template <typename Type>
         requires std::equality_comparable<Type> && PrintableType<Type>
-    void test_equal(std::string_view what, const Type& expected, const Type& actual) {
+    void test_equal(const std::string_view what, const Type& expected, const Type& actual) {
         if (expected != actual) {
             m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
                                                     std::to_string(expected),
@@ -136,7 +145,7 @@ public:
      */
     template <typename Type>
         requires std::equality_comparable<Type> && PrintableType<Type>
-    void test_not_equal(std::string_view what, const Type& expected, const Type& actual) {
+    void test_not_equal(const std::string_view what, const Type& expected, const Type& actual) {
         if (expected == actual) {
             m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
                                                     std::to_string(expected),
@@ -146,7 +155,7 @@ public:
     }
 
 protected:
-    std::string m_name{TESTS_DEFAULT_NAME};
+    std::string m_name{};
 
 private:
     static std::vector<std::unique_ptr<Test>> s_all_tests;
