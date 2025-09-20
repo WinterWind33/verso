@@ -15,10 +15,12 @@
 namespace verso {
 
 /**
- * @brief Concept for a normal version number. Normal version number, as defined in
- *  https://semver.org/#spec-item-2, MUST be an integer and MUST NOT be negative.
+ * @brief Concept for a normal version number. A normal version number MUST be an integer and MUST
+ * NOT be negative.
  *
  *  Normal version numbers are used for the major, minor and patch version numbers.
+ *
+ * Reference: https://semver.org/#spec-item-2
  *
  * @tparam VersionNumberType The type to check.
  */
@@ -231,8 +233,17 @@ constexpr auto components(const Version auto& version) {
     return std::make_tuple(version.major(), version.minor(), version.patch());
 }
 
+// ### This library version ###
+
+/**
+ * @brief The current version of the library, using the default version type.
+ *  To honor this library, the library version will always be represented only by a "version"
+ *  object, single components (major, minor, patch) will not be exposed directly.
+ */
+constexpr version verso_version{0, 1, 0};
+
 // ### Comparison operators ###
-// Comparisons are described here: https://semver.org/#spec-item-11
+// Reference: https://semver.org/#spec-item-11
 // All the following operators strictly follow the specification.
 
 /**
@@ -334,6 +345,7 @@ auto to_string(const Version auto& version) {
 }
 
 namespace details {
+// Helper function to check if a character is a valid digit for a version number.
 constexpr bool is_valid_version_number_digit(const char c) noexcept {
     return c >= '0' && c <= '9';
 }
@@ -371,6 +383,16 @@ static_assert(!is_valid_normal_version_number("-23"));
 
 } // namespace details
 
+/**
+ * @brief Convert a string to a version. The string MUST be in the format "major.minor.patch",
+ *  where major, minor and patch are non-negative integers without leading zeros unless the number
+ * is zero. If the given string is not valid, returns std::nullopt.
+ *
+ * @tparam VersionT A type that satisfies the Version concept.
+ * @param versionStr The string to convert.
+ * @return An optional containing the version if the conversion was successful, std::nullopt
+ * otherwise.
+ */
 template <Version VersionT>
 constexpr std::optional<VersionT> from_string(const std::string_view versionStr) {
     if (versionStr.empty()) {
