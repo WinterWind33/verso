@@ -27,6 +27,6 @@ jobs:
 
             - name: Run tests
               run: |
-                chmod +x ./build/tests/${{ matrix['build-type'] }}/verso-tests
-                ./build/tests/${{ matrix['build-type'] }}/verso-tests
+                chmod +x ./build/tests/verso-tests
+                ./build/tests/verso-tests
 
