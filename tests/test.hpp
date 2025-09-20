@@ -113,16 +113,18 @@ public:
      *
      * @param what The description of the test.
      * @param condition The condition to test.
+     * @return true if the assertion succeeded, false otherwise.
      */
-    void test_true(std::string_view what, bool condition);
+    bool test_true(std::string_view what, bool condition);
 
     /**
      * @brief Asserts that the given condition is false.
      *
      * @param what The description of the test.
      * @param condition The condition to test.
+     * @return true if the assertion succeeded, false otherwise.
      */
-    void test_false(std::string_view what, bool condition);
+    bool test_false(std::string_view what, bool condition);
 
     /**
      * @brief Asserts that the two given values are equal.

@@ -25,20 +25,22 @@ void Test::lock_registration() noexcept {
     s_registration_locked = true;
 }
 
-void Test::test_true(const std::string_view what, const bool condition) {
+bool Test::test_true(const std::string_view what, const bool condition) {
     if (!condition) {
         // Format the failure reason
         m_failure_reasons.push_back(std::format("[test_true] Assertion \"{}\" failed", what));
         m_result = false;
     }
+    return condition;
 }
 
-void Test::test_false(const std::string_view what, const bool condition) {
+bool Test::test_false(const std::string_view what, const bool condition) {
     if (condition) {
         // Format the failure reason
         m_failure_reasons.push_back(std::format("[test_false] Assertion \"{}\" failed", what));
         m_result = false;
     }
+    return !condition;
 }
 
 } // namespace verso::tests
