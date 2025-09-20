@@ -3,10 +3,13 @@
 #define INCLUDE_VERSO_HPP
 
 // C++ STL
+#include <algorithm>
 #include <concepts>
 #include <cstdint>
 #include <format>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <tuple>
 
 namespace verso {
@@ -330,6 +333,93 @@ auto to_string(const Version auto& version) {
     return std::format("{}.{}.{}", version.major(), version.minor(), version.patch());
 }
 
+namespace details {
+constexpr bool is_valid_version_number_digit(const char c) noexcept {
+    return c >= '0' && c <= '9';
+}
+
+static_assert(is_valid_version_number_digit('0'));
+static_assert(is_valid_version_number_digit('9'));
+static_assert(!is_valid_version_number_digit('a'));
+static_assert(!is_valid_version_number_digit(' '));
+static_assert(!is_valid_version_number_digit('-'));
+
+// Helper function to check if a string_view represents a valid normal version number
+// (i.e., a non-negative integer without leading zeros unless it's "0").
+constexpr bool is_valid_normal_version_number(const std::string_view str) {
+    if (str.empty()) {
+        return false;
+    }
+    if (str.size() > 1 && str[0] == '0') {
+        return false; // Leading zero
+    }
+    for (char c : str) {
+        if (!is_valid_version_number_digit(c)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static_assert(is_valid_normal_version_number("0"));
+static_assert(is_valid_normal_version_number("1"));
+static_assert(is_valid_normal_version_number("1234567890"));
+static_assert(!is_valid_normal_version_number(""));
+static_assert(!is_valid_normal_version_number("01"));
+static_assert(!is_valid_normal_version_number("a123"));
+static_assert(!is_valid_normal_version_number("-23"));
+
+} // namespace details
+
+template <Version VersionT>
+constexpr std::optional<VersionT> from_string(const std::string_view versionStr) {
+    if (versionStr.empty()) {
+        return std::nullopt;
+    }
+
+    std::optional<typename VersionT::major_t> major{};
+    std::optional<typename VersionT::minor_t> minor{};
+    std::optional<typename VersionT::patch_t> patch{};
+    std::string_view::const_iterator startIt{std::cbegin(versionStr)};
+    std::string_view::const_iterator it{std::find(startIt, std::cend(versionStr), '.')};
+    for (; it != std::cend(versionStr); it = std::find(startIt, std::cend(versionStr), '.')) {
+        const std::string_view token{startIt, it};
+        if (!details::is_valid_normal_version_number(token)) {
+            // If it's not a valid normal version number, return std::nullopt directly.
+            return std::nullopt;
+        }
+
+        // Otherwise, convert it to the appropriate type.
+        if (!major) {
+            major = static_cast<typename VersionT::major_t>(std::stoul(std::string(token)));
+        } else if (!minor) {
+            minor = static_cast<typename VersionT::minor_t>(std::stoul(std::string(token)));
+        } else {
+            // More than 3 components, invalid version string.
+            return std::nullopt;
+        }
+
+        // It's safe here to increment it because we can be here only if it != <end>.
+        startIt = it + 1;
+    }
+
+    // Handle the last component (or the only one if there are no dots).
+    const std::string_view lastToken{startIt, std::cend(versionStr)};
+    if (!details::is_valid_normal_version_number(lastToken)) {
+        return std::nullopt;
+    }
+
+    // This should only be the patch number because we suppose that major and minor are already set.
+    patch = static_cast<typename VersionT::patch_t>(std::stoul(std::string(lastToken)));
+
+    if (major && minor && patch) {
+        return VersionT{*major, *minor, *patch};
+    }
+
+    return std::nullopt;
+}
+
+static_assert(from_string<version>("") == std::nullopt);
 } // namespace verso
 
 #endif // INCLUDE_VERSO_HPP
