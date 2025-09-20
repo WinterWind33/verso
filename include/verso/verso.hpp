@@ -26,6 +26,11 @@ static_assert(NormalVersionNumber<std::uint32_t>);
 static_assert(NormalVersionNumber<std::uint64_t>);
 
 /**
+ * @brief Default normal version number type, used when no other type is specified.
+ */
+using default_normal_version_number = std::uint32_t;
+
+/**
  * @brief Concept for version traits. Version traits MUST define the types used for the major, minor
  * and patch version numbers, and these types MUST satisfy the NormalVersionNumber concept.
  *
@@ -65,6 +70,107 @@ struct version_traits {
 template <NormalVersionNumber NormalVersionNumberType>
 using default_version_traits =
     version_traits<NormalVersionNumberType, NormalVersionNumberType, NormalVersionNumberType>;
+
+/**
+ * @brief Main version class, parametrized by the version traits.
+ *
+ * @tparam TraitsT The version traits type. It MUST satisfy the VersionTraits concept.
+ */
+template <typename TraitsT = default_version_traits<default_normal_version_number>>
+    requires VersionTraits<TraitsT>
+class version final {
+public:
+    using traits_t = std::decay_t<TraitsT>;
+    using major_t = typename traits_t::major_t;
+    using minor_t = typename traits_t::minor_t;
+    using patch_t = typename traits_t::patch_t;
+
+    /**
+     * @brief Default constructor, initializes the version to 0.0.0.
+     */
+    constexpr version() noexcept = default;
+
+    /**
+     * @brief Constructor with major, minor and patch version numbers.
+     */
+    constexpr version(major_t major, minor_t minor, patch_t patch) noexcept
+        : m_major{major},
+          m_minor{minor},
+          m_patch{patch} {}
+
+    // ### Getters ###
+
+    /**
+     * @brief Get the major version number.
+     *
+     * @return The major version number.
+     */
+    [[nodiscard]] constexpr major_t major() const noexcept {
+        return m_major;
+    }
+
+    /**
+     * @brief Get the minor version number.
+     *
+     * @return The minor version number.
+     */
+    [[nodiscard]] constexpr minor_t minor() const noexcept {
+        return m_minor;
+    }
+
+    /**
+     * @brief Get the patch version number.
+     *
+     * @return The patch version number.
+     */
+    [[nodiscard]] constexpr patch_t patch() const noexcept {
+        return m_patch;
+    }
+
+    // ### Setters ###
+
+    /**
+     * @brief Set the major version number.
+     *
+     * @param major The new major version number.
+     */
+    constexpr void major(const major_t major) noexcept {
+        m_major = major;
+    }
+
+    /**
+     * @brief Set the minor version number.
+     *
+     * @param minor The new minor version number.
+     */
+    constexpr void minor(const minor_t minor) noexcept {
+        m_minor = minor;
+    }
+
+    /**
+     * @brief Set the patch version number.
+     *
+     * @param patch The new patch version number.
+     */
+    constexpr void patch(const patch_t patch) noexcept {
+        m_patch = patch;
+    }
+
+    // ### Comparison operators ###
+
+    [[nodiscard]] constexpr bool operator==(const version& other) const noexcept = default;
+
+private:
+    major_t m_major{};
+    minor_t m_minor{};
+    patch_t m_patch{};
+};
+
+static_assert(version{1, 0, 0}.major() == 1);
+static_assert(version{0, 1, 0}.minor() == 1);
+static_assert(version{0, 0, 1}.patch() == 1);
+static_assert(version{0, 0, 0} == version{});
+static_assert(version{} == version{0, 0, 0});
 
 } // namespace verso
 
