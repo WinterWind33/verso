@@ -5,6 +5,7 @@
 // C++ STL
 #include <concepts>
 #include <cstdint>
+#include <tuple>
 
 namespace verso {
 
@@ -76,9 +77,9 @@ using default_version_traits =
  *
  * @tparam TraitsT The version traits type. It MUST satisfy the VersionTraits concept.
  */
-template <typename TraitsT = default_version_traits<default_normal_version_number>>
+template <typename TraitsT>
     requires VersionTraits<TraitsT>
-class version final {
+class basic_version final {
 public:
     using traits_t = std::decay_t<TraitsT>;
     using major_t = typename traits_t::major_t;
@@ -88,12 +89,12 @@ public:
     /**
      * @brief Default constructor, initializes the version to 0.0.0.
      */
-    constexpr version() noexcept = default;
+    constexpr basic_version() noexcept = default;
 
     /**
      * @brief Constructor with major, minor and patch version numbers.
      */
-    constexpr version(major_t major, minor_t minor, patch_t patch) noexcept
+    constexpr basic_version(major_t major, minor_t minor, patch_t patch) noexcept
         : m_major{major},
           m_minor{minor},
           m_patch{patch} {}
@@ -158,7 +159,7 @@ public:
 
     // ### Comparison operators ###
 
-    [[nodiscard]] constexpr bool operator==(const version& other) const noexcept = default;
+    [[nodiscard]] constexpr bool operator==(const basic_version& other) const noexcept = default;
 
 private:
     major_t m_major{};
@@ -166,11 +167,64 @@ private:
     patch_t m_patch{};
 };
 
-static_assert(version{1, 0, 0}.major() == 1);
-static_assert(version{0, 1, 0}.minor() == 1);
-static_assert(version{0, 0, 1}.patch() == 1);
-static_assert(version{0, 0, 0} == version{});
-static_assert(version{} == version{0, 0, 0});
+/**
+ * @brief Concept for a version. A version MUST be a basic_version instantiated with
+ *  a type that satisfies the VersionTraits concept.
+ *
+ * @tparam VersionT The type to check.
+ */
+template <typename VersionT>
+concept Version = requires {
+    // Must have a nested traits_t type that satisfies the VersionTraits concept.
+    typename std::decay_t<VersionT>::traits_t;
+    requires VersionTraits<typename std::decay_t<VersionT>::traits_t>;
+} && std::same_as<VersionT, basic_version<typename std::decay_t<VersionT>::traits_t>>;
+
+/**
+ * @brief Alias for version which has all the version numbers with the same types.
+ *
+ * @tparam NormalVersionNumberT The type of the version numbers.
+ */
+template <NormalVersionNumber NormalVersionNumberT>
+using uniform_version = basic_version<default_version_traits<NormalVersionNumberT>>;
+
+/**
+ * @brief Default specialization of basic_version with the default normal
+ *  version number (std::uint32_t)
+ */
+using version = uniform_version<default_normal_version_number>;
+
+/**
+ * @brief Version with all normal version numbers type equal to std::uint8_t.
+ */
+using version8 = uniform_version<std::uint8_t>;
+
+/**
+ * @brief Version with all normal version numbers type equal to std::uint16_t.
+ */
+using version16 = uniform_version<std::uint16_t>;
+
+/**
+ * @brief Version with all normal version numbers type equal to std::uint32_t.
+ */
+using version32 = uniform_version<std::uint32_t>;
+
+/**
+ * @brief Version with all normal version numbers type equal to std::uint64_t.
+ */
+using version64 = uniform_version<std::uint64_t>;
+
+/**
+ * @brief Get the components of a version as a tuple (major, minor, patch).
+ *  This can be useful for structured bindings.
+ *
+ * @tparam VersionT A type that satisfies the Version concept.
+ * @param version The version instance.
+ * @return A tuple containing the major, minor and patch version numbers.
+ */
+constexpr auto components(const Version auto& version) {
+    return std::make_tuple(version.major(), version.minor(), version.patch());
+}
 
 } // namespace verso
 
