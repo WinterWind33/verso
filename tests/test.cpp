@@ -27,14 +27,18 @@ void Test::lock_registration() noexcept {
 
 void Test::test_true(const std::string_view what, const bool condition) {
     if (!condition) {
-        m_failure_reasons.emplace_back(what);
+        // Format the failure reason
+        m_failure_reasons.push_back(
+            std::format("[test_true] Condition \"{}\" expected to be true but was false", what));
         m_result = false;
     }
 }
 
 void Test::test_false(const std::string_view what, const bool condition) {
     if (condition) {
-        m_failure_reasons.emplace_back(what);
+        // Format the failure reason
+        m_failure_reasons.push_back(
+            std::format("[test_false] Condition \"{}\" expected to be false but was true", what));
         m_result = false;
     }
 }
