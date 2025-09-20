@@ -4,6 +4,7 @@
 
 // C++ STL
 #include <concepts>
+#include <format>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -75,15 +76,16 @@ public:
      *
      * @tparam Type The type of the values to compare.
      * @param what The description of the test.
-     * @param lhs The first value to compare
-     * @param rhs The second value to compare
+     * @param expected The expected value
+     * @param actual The actual value
      */
     template <typename Type>
         requires std::equality_comparable<Type> && PrintableType<Type>
-    void test_equal(std::string_view what, const Type& lhs, const Type& rhs) {
-        if (lhs != rhs) {
-            m_failure_reasons.push_back(std::string{what} + ". Expected: " + std::to_string(lhs) +
-                                        ", actual: " + std::to_string(rhs));
+    void test_equal(std::string_view what, const Type& expected, const Type& actual) {
+        if (expected != actual) {
+            m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
+                                                    std::to_string(expected),
+                                                    std::to_string(actual)));
             m_result = false;
         }
     }
@@ -93,15 +95,16 @@ public:
      *
      * @tparam Type The type of the values to compare.
      * @param what The description of the test.
-     * @param lhs The first value to compare
-     * @param rhs The second value to compare
+     * @param expected The expected value
+     * @param actual The actual value
      */
     template <typename Type>
         requires std::equality_comparable<Type> && PrintableType<Type>
-    void test_not_equal(std::string_view what, const Type& lhs, const Type& rhs) {
-        if (lhs == rhs) {
-            m_failure_reasons.push_back(std::string{what} + ". Expected: " + std::to_string(lhs) +
-                                        ", actual: " + std::to_string(rhs));
+    void test_not_equal(std::string_view what, const Type& expected, const Type& actual) {
+        if (expected == actual) {
+            m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
+                                                    std::to_string(expected),
+                                                    std::to_string(actual)));
             m_result = false;
         }
     }
