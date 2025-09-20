@@ -27,13 +27,34 @@ concept PrintableType = requires {
     { std::to_string(std::declval<Type>()) } -> std::convertible_to<std::string>;
 };
 
+/**
+ * @brief Base class for all the verso tests.
+ */
 class Test {
 public:
+    /**
+     * @brief Get the all tests object
+     *
+     * @return A constant reference to the vector containing all the registered tests.
+     */
     [[nodiscard]] static const std::vector<std::unique_ptr<Test>>& get_all_tests() noexcept {
         return s_all_tests;
     }
 
+    /**
+     * @brief Registers a new test in the test runner.
+     *
+     * @param test The test to register.
+     */
     static void register_test(std::unique_ptr<Test> test);
+
+    /**
+     * @brief Locks the registration of new tests. After calling this method,
+     *  any attempt to register a new test will throw an exception.
+     *  This is useful to prevent tests from being registered after
+     *  the test runner has started running the tests.
+     */
+    static void lock_registration();
 
     [[nodiscard]] std::string_view name() const noexcept {
         return m_name;
@@ -114,6 +135,7 @@ protected:
 
 private:
     static std::vector<std::unique_ptr<Test>> s_all_tests;
+    static bool s_registration_locked;
 
     // By default we suppose the test to be successful.
     bool m_result{true};

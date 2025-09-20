@@ -9,6 +9,9 @@
 constexpr std::string_view ENDL{"\n"};
 
 namespace verso::tests {
+/**
+ * @brief Prints the help page for the tests runner.
+ */
 void print_help() {
     std::cout << "verso library tests runner" << ENDL;
     std::cout << ENDL;
@@ -53,6 +56,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // Since we are going to run tests using a for loop, we need to lock the registration
+    // of new tests to prevent tests from being registered while we are running them.
+    verso::tests::Test::lock_registration();
+
     // Simply retrieve all registered tests and run them.
     for (const auto& test : all_tests) {
         assert(test);
@@ -62,6 +69,7 @@ int main(int argc, char* argv[]) {
         }
         test->run();
 
+        // If the test has not succeeded, print the failure reasons.
         if (!test->succeeded()) {
             std::cout << "[ ERROR ] Test \"" << test->name() << "\"" << ENDL;
             std::cout << "Reasons:" << ENDL;
@@ -73,6 +81,7 @@ int main(int argc, char* argv[]) {
 
             execution_succeeded = false;
         } else if (print_successful_tests || verbose_output) {
+            // Print the successful test only if requested or if we are in verbose mode.
             std::cout << "[ OK ] Test \"" << test->name() << "\"" << ENDL;
         }
     }
