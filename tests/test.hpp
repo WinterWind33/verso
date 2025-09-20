@@ -120,7 +120,7 @@ public:
     static ::verso::tests::TestRegistrar<TestType> InstanceName{}; \
     }
 #define VERSO_REGISTER_TEST(TestType) \
-    VERSO_REGISTER_TEST_DETAIL(TestType, CONCATENATE(g_testRegistrarInstance_, #TestType))
+    VERSO_REGISTER_TEST_DETAIL(TestType, CONCATENATE(g_testRegistrarInstance_, TestType))
 
 } // namespace verso::tests
 
