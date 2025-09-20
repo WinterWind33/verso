@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Andrea Ballestrazzi
-#include <verso/verso.hpp>
+#include "verso/verso.hpp"
 
 #include "test.hpp"
 
@@ -11,7 +11,7 @@ namespace verso::tests {
  */
 class FromStringTests final : public Test {
 public:
-    FromStringTests() : Test{"from_string function tests"} {}
+    FromStringTests() : Test{"from_string() function tests"} {}
 
     void run() override { // Empty string
         {
