@@ -1,0 +1,32 @@
+# Copyright (c) 2025 Andrea Ballestrazzi
+name: Linux x64 GCC Build
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                compiler: [g++]
+                build-type: [Release, Debug]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install dependencies
+              run: sudo apt-get install -y cmake g++
+
+            - name: Configure CMake
+              run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix['build-type'] }} -DCMAKE_CXX_COMPILER=${{ matrix['compiler'] }} -DVERSO_BUILD_TESTS=ON.
+
+            - name: Build
+              run: cmake --build build --config ${{ matrix['build-type'] }} -- -j$(nproc)
+
+            - name: Run tests
+              run: |
+                chmod +x ./build/tests/verso-tests
+                ./build/tests/verso-tests
+

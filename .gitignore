@@ -71,3 +71,4 @@
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,c++,git
 *code-workspace
+build/
