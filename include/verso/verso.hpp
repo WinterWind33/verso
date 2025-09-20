@@ -226,6 +226,90 @@ constexpr auto components(const Version auto& version) {
     return std::make_tuple(version.major(), version.minor(), version.patch());
 }
 
+// ### Comparison operators ###
+
+/**
+ * @brief Less-than comparison operator for versions.
+ *
+ * @param lhs The left-hand side version.
+ * @param rhs The right-hand side version.
+ * @return true if lhs is less than rhs, false otherwise.
+ */
+constexpr bool operator<(const Version auto& lhs, const Version auto& rhs) noexcept {
+    if (lhs.major() != rhs.major()) {
+        return lhs.major() < rhs.major();
+    }
+    if (lhs.minor() != rhs.minor()) {
+        return lhs.minor() < rhs.minor();
+    }
+    return lhs.patch() < rhs.patch();
+}
+
+// Static assertions for documentation purposes.
+static_assert(version{} < version{1, 0, 0});
+static_assert(version{1, 0, 0} < version{1, 1, 0});
+static_assert(version{1, 1, 0} < version{1, 1, 1});
+static_assert(version{1, 1, 1} < version{2, 0, 0});
+
+/**
+ * @brief Less-than-or-equal comparison operator for versions.
+ *
+ * @param lhs The left-hand side version.
+ * @param rhs The right-hand side version.
+ * @return true if lhs is less than or equal to rhs, false otherwise.
+ */
+constexpr bool operator<=(const Version auto& lhs, const Version auto& rhs) noexcept {
+    return (lhs < rhs) || (lhs == rhs);
+}
+
+// Static assertions for documentation purposes.
+static_assert(version{} <= version{});
+static_assert(version{} <= version{1, 0, 0});
+static_assert(version{1, 0, 0} <= version{1, 0, 0});
+static_assert(version{1, 0, 0} <= version{1, 1, 0});
+static_assert(version{1, 1, 0} <= version{1, 1, 0});
+static_assert(version{1, 1, 1} <= version{1, 1, 1});
+static_assert(version{1, 1, 1} <= version{2, 0, 0});
+
+/**
+ * @brief Greater-than-or-equal comparison operator for versions.
+ *
+ * @param lhs The left-hand side version.
+ * @param rhs The right-hand side version.
+ * @return true if lhs is greater than or equal to rhs, false otherwise.
+ */
+constexpr bool operator>=(const Version auto& lhs, const Version auto& rhs) noexcept {
+    return !(lhs < rhs);
+}
+
+// Static assertions for documentation purposes.
+static_assert(version{} >= version{});
+static_assert(version{1, 0, 0} >= version{});
+static_assert(version{1, 0, 0} >= version{1, 0, 0});
+static_assert(version{1, 1, 0} >= version{1, 0, 0});
+static_assert(version{1, 1, 0} >= version{1, 1, 0});
+static_assert(version{1, 1, 1} >= version{1, 1, 0});
+static_assert(version{1, 1, 1} >= version{1, 1, 1});
+static_assert(version{2, 0, 0} >= version{1, 1, 1});
+
+/**
+ * @brief Greater-than comparison operator for versions.
+ *
+ * @param lhs The left-hand side version.
+ * @param rhs The right-hand side version.
+ * @return true if lhs is greater than rhs, false otherwise.
+ */
+constexpr bool operator>(const Version auto& lhs, const Version auto& rhs) noexcept {
+    return !(lhs <= rhs);
+}
+
+// Static assertions for documentation purposes.
+static_assert(version{1, 0, 0} > version{});
+static_assert(version{1, 0, 0} > version{0, 1, 0});
+static_assert(version{1, 1, 0} > version{1, 0, 0});
+static_assert(version{1, 1, 1} > version{1, 1, 0});
+static_assert(version{2, 0, 0} > version{1, 1, 1});
+
 } // namespace verso
 
 #endif // INCLUDE_VERSO_HPP
