@@ -8,7 +8,6 @@ set(VERSO_TESTS_SOURCE_FILES
     runner-main.cpp
 
     # Verso test files
-    verso/test-test.cpp
 )
 
 add_executable(verso-tests ${VERSO_TESTS_SOURCE_FILES})
