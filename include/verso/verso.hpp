@@ -227,6 +227,8 @@ constexpr auto components(const Version auto& version) {
 }
 
 // ### Comparison operators ###
+// Comparisons are described here: https://semver.org/#spec-item-11
+// All the following operators strictly follow the specification.
 
 /**
  * @brief Less-than comparison operator for versions.
