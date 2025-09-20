@@ -16,6 +16,16 @@ namespace verso::tests {
  */
 constexpr std::string_view TESTS_DEFAULT_NAME{"Unnamed Test"};
 
+/**
+ * @brief Concept for types that can be printed using std::to_string.
+ *
+ * @tparam Type The type to test.
+ */
+template <typename Type>
+concept PrintableType = requires {
+    { std::to_string(std::declval<Type>()) } -> std::convertible_to<std::string>;
+};
+
 class Test {
 public:
     [[nodiscard]] static const std::vector<std::unique_ptr<Test>>& get_all_tests() noexcept {
@@ -68,10 +78,12 @@ public:
      * @param lhs The first value to compare
      * @param rhs The second value to compare
      */
-    template <std::equality_comparable Type>
+    template <typename Type>
+        requires std::equality_comparable<Type> && PrintableType<Type>
     void test_equal(std::string_view what, const Type& lhs, const Type& rhs) {
         if (lhs != rhs) {
-            m_failure_reasons.emplace_back(what);
+            m_failure_reasons.push_back(std::string{what} + ". Expected: " + std::to_string(lhs) +
+                                        ", actual: " + std::to_string(rhs));
             m_result = false;
         }
     }
@@ -84,10 +96,12 @@ public:
      * @param lhs The first value to compare
      * @param rhs The second value to compare
      */
-    template <std::equality_comparable Type>
+    template <typename Type>
+        requires std::equality_comparable<Type> && PrintableType<Type>
     void test_not_equal(std::string_view what, const Type& lhs, const Type& rhs) {
         if (lhs == rhs) {
-            m_failure_reasons.emplace_back(what);
+            m_failure_reasons.push_back(std::string{what} + ". Expected: " + std::to_string(lhs) +
+                                        ", actual: " + std::to_string(rhs));
             m_result = false;
         }
     }
@@ -98,7 +112,8 @@ protected:
 private:
     static std::vector<std::unique_ptr<Test>> s_all_tests;
 
-    bool m_result{};
+    // By default we suppose the test to be successful.
+    bool m_result{true};
     std::vector<std::string> m_failure_reasons{};
 };
 
