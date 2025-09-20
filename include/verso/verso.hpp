@@ -5,6 +5,8 @@
 // C++ STL
 #include <concepts>
 #include <cstdint>
+#include <format>
+#include <string>
 #include <tuple>
 
 namespace verso {
@@ -311,6 +313,22 @@ static_assert(version{1, 0, 0} > version{0, 1, 0});
 static_assert(version{1, 1, 0} > version{1, 0, 0});
 static_assert(version{1, 1, 1} > version{1, 1, 0});
 static_assert(version{2, 0, 0} > version{1, 1, 1});
+
+// ### To and from string functions ###
+
+/**
+ * @brief Convert a version to a string in the format "major.minor.patch".
+ *  This follows the semantic versioning specification which states that
+ *  version numbers MUST NOT contain leading zeroes.
+ *
+ * Reference: https://semver.org/#spec-item-2
+ *
+ * @param version The version to convert.
+ * @return A string representation of the version.
+ */
+auto to_string(const Version auto& version) {
+    return std::format("{}.{}.{}", version.major(), version.minor(), version.patch());
+}
 
 } // namespace verso
 
