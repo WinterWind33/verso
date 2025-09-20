@@ -15,32 +15,32 @@
 namespace verso {
 
 /**
- * @brief Concept for a normal version number. A normal version number MUST be an integer and MUST
- * NOT be negative.
+ * @brief Concept for a normal version number component. A normal version number component MUST be
+ * an integer and MUST NOT be negative.
  *
  *  Normal version numbers are used for the major, minor and patch version numbers.
  *
  * Reference: https://semver.org/#spec-item-2
  *
- * @tparam VersionNumberType The type to check.
+ * @tparam VersionNumberComponentType The type to check.
  */
-template <typename VersionNumberType>
-concept NormalVersionNumber = std::unsigned_integral<VersionNumberType>;
+template <typename VersionNumberComponentType>
+concept NormalVersionNumberComponent = std::unsigned_integral<VersionNumberComponentType>;
 
 // Some static assertions for documentation purposes.
-static_assert(NormalVersionNumber<std::uint8_t>);
-static_assert(NormalVersionNumber<std::uint16_t>);
-static_assert(NormalVersionNumber<std::uint32_t>);
-static_assert(NormalVersionNumber<std::uint64_t>);
+static_assert(NormalVersionNumberComponent<std::uint8_t>);
+static_assert(NormalVersionNumberComponent<std::uint16_t>);
+static_assert(NormalVersionNumberComponent<std::uint32_t>);
+static_assert(NormalVersionNumberComponent<std::uint64_t>);
 
 /**
- * @brief Default normal version number type, used when no other type is specified.
+ * @brief Default normal version number component type, used when no other type is specified.
  */
-using default_normal_version_number = std::uint32_t;
+using default_normal_version_number_component = std::uint32_t;
 
 /**
  * @brief Concept for version traits. Version traits MUST define the types used for the major, minor
- * and patch version numbers, and these types MUST satisfy the NormalVersionNumber concept.
+ * and patch version numbers, and these types MUST satisfy the NormalVersionNumberComponent concept.
  *
  * @tparam TraitsT The traits type to check.
  */
@@ -50,9 +50,9 @@ concept VersionTraits = requires {
     typename TraitsT::minor_t;
     typename TraitsT::patch_t;
 
-    requires NormalVersionNumber<typename TraitsT::major_t>;
-    requires NormalVersionNumber<typename TraitsT::minor_t>;
-    requires NormalVersionNumber<typename TraitsT::patch_t>;
+    requires NormalVersionNumberComponent<typename TraitsT::major_t>;
+    requires NormalVersionNumberComponent<typename TraitsT::minor_t>;
+    requires NormalVersionNumberComponent<typename TraitsT::patch_t>;
 };
 
 /**
@@ -63,7 +63,8 @@ concept VersionTraits = requires {
  * @tparam MinorT The type used for the minor version number.
  * @tparam PatchT The type used for the patch version number.
  */
-template <NormalVersionNumber MajorT, NormalVersionNumber MinorT, NormalVersionNumber PatchT>
+template <NormalVersionNumberComponent MajorT, NormalVersionNumberComponent MinorT,
+          NormalVersionNumberComponent PatchT>
 struct version_traits {
     using major_t = std::decay_t<MajorT>;
     using minor_t = std::decay_t<MinorT>;
@@ -73,11 +74,13 @@ struct version_traits {
 /**
  * @brief Default version traits, using the same type for major, minor and patch version numbers.
  *
- * @tparam NormalVersionNumberType The type used for the major, minor and patch version numbers.
+ * @tparam NormalVersionNumberComponentType The type used for the major, minor and patch version
+ *  numbers.
  */
-template <NormalVersionNumber NormalVersionNumberType>
+template <NormalVersionNumberComponent NormalVersionNumberComponentType>
 using default_version_traits =
-    version_traits<NormalVersionNumberType, NormalVersionNumberType, NormalVersionNumberType>;
+    version_traits<NormalVersionNumberComponentType, NormalVersionNumberComponentType,
+                   NormalVersionNumberComponentType>;
 
 /**
  * @brief Main version class, parametrized by the version traits.
@@ -190,16 +193,16 @@ concept Version = requires {
 /**
  * @brief Alias for version which has all the version numbers with the same types.
  *
- * @tparam NormalVersionNumberT The type of the version numbers.
+ * @tparam NormalVersionNumberComponentT The type of the version numbers.
  */
-template <NormalVersionNumber NormalVersionNumberT>
-using uniform_version = basic_version<default_version_traits<NormalVersionNumberT>>;
+template <NormalVersionNumberComponent NormalVersionNumberComponentT>
+using uniform_version = basic_version<default_version_traits<NormalVersionNumberComponentT>>;
 
 /**
  * @brief Default specialization of basic_version with the default normal
  *  version number (std::uint32_t)
  */
-using version = uniform_version<default_normal_version_number>;
+using version = uniform_version<default_normal_version_number_component>;
 
 /**
  * @brief Version with all normal version numbers type equal to std::uint8_t.
@@ -329,6 +332,13 @@ static_assert(version{1, 1, 1} > version{1, 1, 0});
 static_assert(version{2, 0, 0} > version{1, 1, 1});
 
 // ### To and from string functions ###
+
+/**
+ * @brief Semantic version string separator.
+ *
+ * Reference: https://semver.org/#spec-item-2
+ */
+constexpr char VERSION_STRING_SEPARATOR{'.'};
 
 /**
  * @brief Convert a version to a string in the format "major.minor.patch".
