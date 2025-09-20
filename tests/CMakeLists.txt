@@ -3,6 +3,8 @@
 if(VERSO_BUILD_TESTS)
 
 set(VERSO_TESTS_SOURCE_FILES
+    test.hpp
+    test.cpp
     runner-main.cpp
 )
 
