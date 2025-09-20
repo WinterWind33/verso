@@ -365,7 +365,7 @@ constexpr bool is_valid_normal_version_number(const std::string_view str) {
     if (str.size() > 1 && str[0] == '0') {
         return false; // Leading zero
     }
-    for (char c : str) {
+    for (const char c : str) {
         if (!is_valid_version_number_digit(c)) {
             return false;
         }
@@ -426,13 +426,12 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
     }
 
     // Handle the last component (or the only one if there are no dots).
-    const std::string_view lastToken{startIt, std::cend(versionStr)};
-    if (!details::is_valid_normal_version_number(lastToken)) {
-        return std::nullopt;
+    if (const std::string_view lastToken{startIt, std::cend(versionStr)};
+        details::is_valid_normal_version_number(lastToken)) {
+        // This should only be the patch number because we suppose that major and minor are already
+        // set.
+        patch = static_cast<typename VersionT::patch_t>(std::stoul(std::string(lastToken)));
     }
-
-    // This should only be the patch number because we suppose that major and minor are already set.
-    patch = static_cast<typename VersionT::patch_t>(std::stoul(std::string(lastToken)));
 
     if (major && minor && patch) {
         return VersionT{*major, *minor, *patch};
