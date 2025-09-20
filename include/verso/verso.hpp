@@ -351,7 +351,8 @@ constexpr char VERSION_STRING_SEPARATOR{'.'};
  * @return A string representation of the version.
  */
 auto to_string(const Version auto& version) {
-    return std::format("{}.{}.{}", version.major(), version.minor(), version.patch());
+    return std::format("{}{}{}{}{}", version.major(), VERSION_STRING_SEPARATOR, version.minor(),
+                       VERSION_STRING_SEPARATOR, version.patch());
 }
 
 namespace details {
@@ -413,8 +414,10 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
     std::optional<typename VersionT::minor_t> minor{};
     std::optional<typename VersionT::patch_t> patch{};
     std::string_view::const_iterator startIt{std::cbegin(versionStr)};
-    std::string_view::const_iterator it{std::find(startIt, std::cend(versionStr), '.')};
-    for (; it != std::cend(versionStr); it = std::find(startIt, std::cend(versionStr), '.')) {
+    std::string_view::const_iterator it{
+        std::find(startIt, std::cend(versionStr), VERSION_STRING_SEPARATOR)};
+    for (; it != std::cend(versionStr);
+         it = std::find(startIt, std::cend(versionStr), VERSION_STRING_SEPARATOR)) {
         const std::string_view token{startIt, it};
         if (!details::is_valid_normal_version_number(token)) {
             // If it's not a valid normal version number, return std::nullopt directly.
