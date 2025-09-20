@@ -48,4 +48,21 @@ static_assert(VersionTraits<default_version_traits<std::uint16_t>>);
 static_assert(VersionTraits<default_version_traits<std::uint32_t>>);
 static_assert(VersionTraits<default_version_traits<std::uint64_t>>);
 } // namespace version_traits_concept_tests
+
+namespace version_concept_tests {
+static_assert(Version<version>);
+static_assert(Version<version8>);
+static_assert(Version<version16>);
+static_assert(Version<version32>);
+static_assert(Version<version64>);
+} // namespace version_concept_tests
+
+namespace components_function_tests {
+static_assert(std::same_as<decltype(components(version{})),
+                           std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>>);
+static_assert(std::get<0>(components(version{1, 2, 3})) == 1);
+static_assert(std::get<1>(components(version{1, 2, 3})) == 2);
+static_assert(std::get<2>(components(version{1, 2, 3})) == 3);
+} // namespace components_function_tests
+
 } // namespace verso::tests
