@@ -23,6 +23,14 @@ public:
 
     virtual void run() = 0;
 
+    [[nodiscard]] bool succeeded() const noexcept {
+        return m_result;
+    }
+
+    const auto& get_failure_reasons() const noexcept {
+        return m_failure_reasons;
+    }
+
     static const std::vector<std::unique_ptr<Test>>& get_all_tests() noexcept {
         return s_all_tests;
     }
@@ -34,6 +42,9 @@ protected:
 
 private:
     static std::vector<std::unique_ptr<Test>> s_all_tests;
+
+    bool m_result{};
+    std::vector<std::string> m_failure_reasons{};
 };
 
 template <typename TestType>
