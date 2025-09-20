@@ -1,0 +1,12 @@
+# Copyright (c) 2025 Andrea Ballestrazzi
+
+if(VERSO_BUILD_TESTS)
+
+set(VERSO_TESTS_SOURCE_FILES
+    runner-main.cpp
+)
+
+add_executable(verso-tests ${VERSO_TESTS_SOURCE_FILES})
+target_link_libraries(verso-tests PRIVATE verso)
+target_include_directories(verso-tests PRIVATE tests)
+endif() # VERSO_BUILD_TESTS
