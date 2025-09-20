@@ -115,8 +115,12 @@ public:
 
 #define CONCATENATE_DETAIL(x, y) x##y
 #define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
+#define VERSO_REGISTER_TEST_DETAIL(TestType, InstanceName)         \
+    namespace {                                                    \
+    static ::verso::tests::TestRegistrar<TestType> InstanceName{}; \
+    }
 #define VERSO_REGISTER_TEST(TestType) \
-    static ::verso::tests::TestRegistrar<TestType> CONCATENATE(testRegistrar_, #TestType) {}
+    VERSO_REGISTER_TEST_DETAIL(TestType, CONCATENATE(g_testRegistrarInstance_, #TestType))
 
 } // namespace verso::tests
 

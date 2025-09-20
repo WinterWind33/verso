@@ -15,4 +15,18 @@ void Test::register_test(std::unique_ptr<Test> test) {
     s_all_tests.push_back(std::move(test));
 }
 
+void Test::test_true(std::string_view what, bool condition) {
+    if (!condition) {
+        m_failure_reasons.emplace_back(what);
+        m_result = false;
+    }
+}
+
+void Test::test_false(std::string_view what, bool condition) {
+    if (condition) {
+        m_failure_reasons.emplace_back(what);
+        m_result = false;
+    }
+}
+
 } // namespace verso::tests
