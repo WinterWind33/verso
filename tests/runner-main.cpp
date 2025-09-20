@@ -8,22 +8,6 @@
 
 constexpr std::string_view ENDL{"\n"};
 
-class TestTest final : public verso::tests::Test {
-public:
-    TestTest() {
-        m_name = "Test class test";
-    }
-
-    void run() override {
-        test_true("Test true but false", false);
-        test_false("Test false but true", true);
-        test_equal("Test equal but not equal", 1, 2);
-        test_not_equal("Test not equal but equal", 1, 1);
-    }
-};
-
-VERSO_REGISTER_TEST(TestTest)
-
 namespace verso::tests {
 void print_help() {
     std::cout << "verso library tests runner" << ENDL;
