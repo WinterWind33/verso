@@ -148,6 +148,74 @@ public:
             const auto result{from_string<version>(testStr)};
             test_is_nullopt(testStr, result);
         }
+        // Not versions at all
+        {
+            constexpr std::string_view testStr{"hello world!"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.0\n"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"version 1.0.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.0 version"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{" "};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"\t"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"\n"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"Yesterday i saw a version 1.0.0 in the sky!"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"1.0.0 is the version i saw yesterday!"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"Yesterday i saw a version 1.0.0"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{
+                "My father always told me: do not leave 127.0.0.1 alone!"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{
+                "My grandmother said to me that in 1965 she saw a flying jellyfish."};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
+        {
+            constexpr std::string_view testStr{"I\'m having too much fun writing these tests!"};
+            const auto result{from_string<version>(testStr)};
+            test_is_nullopt(testStr, result);
+        }
     }
 
 private:
