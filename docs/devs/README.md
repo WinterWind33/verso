@@ -4,6 +4,8 @@ In this folder you can find useful documentation for developers who want to cont
 
 ## Contents
 
+- [Setting up the repository for development](setup-repo.md)
+
 ### Testing
 
 - [Create a new verso test](create-a-test.md)
