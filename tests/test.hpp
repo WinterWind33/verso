@@ -113,16 +113,18 @@ public:
      *
      * @param what The description of the test.
      * @param condition The condition to test.
+     * @return true if the assertion succeeded, false otherwise.
      */
-    void test_true(std::string_view what, bool condition);
+    bool test_true(std::string_view what, bool condition);
 
     /**
      * @brief Asserts that the given condition is false.
      *
      * @param what The description of the test.
      * @param condition The condition to test.
+     * @return true if the assertion succeeded, false otherwise.
      */
-    void test_false(std::string_view what, bool condition);
+    bool test_false(std::string_view what, bool condition);
 
     /**
      * @brief Asserts that the two given values are equal.
@@ -137,7 +139,8 @@ public:
     void test_equal(const std::string_view what, const Type& expected, const Type& actual) {
         if (expected != actual) {
             m_failure_reasons.push_back(
-                std::format("{}. Expected: '{}', Actual: '{}'", what, expected, actual));
+                std::format("[test_equal] {}. Values are not equal. Expected: '{}', Actual: '{}'",
+                            what, expected, actual));
             m_result = false;
         }
     }
@@ -154,9 +157,9 @@ public:
         requires std::equality_comparable<Type> && PrintableNonStringType<Type>
     void test_equal(const std::string_view what, const Type& expected, const Type& actual) {
         if (expected != actual) {
-            m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
-                                                    std::to_string(expected),
-                                                    std::to_string(actual)));
+            m_failure_reasons.push_back(
+                std::format("[test_equal] {}. Values are not equal. Expected: {}, Actual: {}", what,
+                            std::to_string(expected), std::to_string(actual)));
             m_result = false;
         }
     }
@@ -171,10 +174,11 @@ public:
      */
     template <typename Type>
         requires StringType<Type>
-    void test_not_equal(const std::string_view what, const Type& expected, const Type& actual) {
-        if (expected == actual) {
-            m_failure_reasons.push_back(
-                std::format("{}. Expected: '{}', Actual: '{}'", what, expected, actual));
+    void test_not_equal(const std::string_view what, const Type& first, const Type& second) {
+        if (first == second) {
+            m_failure_reasons.push_back(std::format(
+                "[test_not_equal] {}. Values are equal. First value: '{}', Second value: '{}'",
+                what, first, second));
             m_result = false;
         }
     }
@@ -189,11 +193,11 @@ public:
      */
     template <typename Type>
         requires std::equality_comparable<Type> && PrintableNonStringType<Type>
-    void test_not_equal(const std::string_view what, const Type& expected, const Type& actual) {
-        if (expected == actual) {
-            m_failure_reasons.push_back(std::format("{}. Expected: {}, Actual: {}", what,
-                                                    std::to_string(expected),
-                                                    std::to_string(actual)));
+    void test_not_equal(const std::string_view what, const Type& first, const Type& second) {
+        if (first == second) {
+            m_failure_reasons.push_back(std::format(
+                "[test_not_equal] {}. Values are equal. First value: {}, Second value: {}", what,
+                std::to_string(first), std::to_string(second)));
             m_result = false;
         }
     }

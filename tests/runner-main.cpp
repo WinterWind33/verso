@@ -79,6 +79,9 @@ int main(int argc, char* argv[]) {
                 std::cout << "\t- " << failure << ENDL;
             }
 
+            // Print a new line to separate tests.
+            std::cout << ENDL;
+
             execution_succeeded = false;
         } else if (print_successful_tests || verbose_output) {
             // Print the successful test only if requested or if we are in verbose mode.
