@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Andrea Ballestrazzi
+// Copyright (c) 2025-2026 Andrea Ballestrazzi
 #include "verso/verso.hpp"
 
 // This file is used to perform static assertions on concepts and other compile-time

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Andrea Ballestrazzi
+// Copyright (c) 2025-2026 Andrea Ballestrazzi
 #ifndef INCLUDE_VERSO_HPP
 #define INCLUDE_VERSO_HPP
 

@@ -7,7 +7,7 @@ Getting started with Verso is easy. After you configured your environment, eithe
 Include the Verso header file in your C++ source code:
 
 ```cpp
-#include <verso/verso.h>
+#include <verso/verso.hpp>
 ```
 
 After that, you can freely use classes and function you can find in the `verso` namespace.
@@ -51,7 +51,7 @@ You can convert versions to and from strings using the `to_string` function and 
 To string:
 
 ```cpp
-#include <verso/verso.h>
+#include <verso/verso.hpp>
 
 const verso::version ver{1, 2, 3};
 const std::string ver_str = verso::to_string(ver); // "1.2.3"
@@ -60,13 +60,13 @@ const std::string ver_str = verso::to_string(ver); // "1.2.3"
 From string:
 
 ```cpp
-#include <verso/verso.h>
+#include <verso/verso.hpp>
 
 const std::string ver_str = "1.2.3";
-const std::optional<verso::version>ver = verso::from_string(ver_str); // ver has value 1.2.3
+const std::optional<verso::version>ver = verso::from_string<verso::version>(ver_str); // ver has value 1.2.3
 
 const std::string invalid_ver_str = "1.2"; // Invalid version string
-const std::optional<verso::version> invalid_ver = verso::from_string(invalid_ver_str); // invalid_ver has no value, std::nullopt
+const std::optional<verso::version> invalid_ver = verso::from_string<verso::version>(invalid_ver_str); // invalid_ver has no value, std::nullopt
 ```
 
 Remember to provide a valid version string in the format `MAJOR.MINOR.PATCH` and be sure to respect the semantic versioning rules (see <https://semver.org/#spec-item-2>, so no negative numbers, no non-integer values, leading zeros etc).
@@ -123,7 +123,7 @@ You can either use the provided `verso::version_traits<MajorType, MinorType, Pat
 An example using the provided `verso::version_traits` template:
 
 ```cpp
-#include <verso/verso.h>
+#include <verso/verso.hpp>
 
 // Define your own type traits structure
 using my_version_traits = verso::version_traits<std::uint16_t, std::uint32_t, std::uint64_t>;
@@ -140,7 +140,7 @@ my_version ver{1, 0, 0}; // Creates a version 1.0.0 with custom types
 An example defining your own type traits structure:
 
 ```cpp
-#include <verso/verso.h>
+#include <verso/verso.hpp>
 
 // Define your own type traits structure
 struct my_version_traits {

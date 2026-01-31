@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Andrea Ballestrazzi
+// Copyright (c) 2025-2026 Andrea Ballestrazzi
 #include "verso/verso.hpp"
 
 #include "test.hpp"
