@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Andrea Ballestrazzi
+# Copyright (c) 2025-2026 Andrea Ballestrazzi
 cmake_minimum_required(VERSION 3.16)
 
 project(verso

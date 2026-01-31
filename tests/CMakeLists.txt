@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Andrea Ballestrazzi
+# Copyright (c) 2025-2026 Andrea Ballestrazzi
 
 if(VERSO_BUILD_TESTS)
 
