@@ -44,4 +44,8 @@ You can find a getting started guide in the [docs/getting-started.md](docs/getti
 
 ## Development documentation
 
-If you want to contribute to the development of verso, you can find additional documentation for developers in the [docs/dev](docs/devs/) folder.
+Make sure to read the [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) file for guidelines on contributing to the project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
