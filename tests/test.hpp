@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Andrea Ballestrazzi
+// Copyright (c) 2025-2026 Andrea Ballestrazzi
 #ifndef VERSO_TESTS_TEST_HPP
 #define VERSO_TESTS_TEST_HPP
 
