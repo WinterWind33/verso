@@ -36,10 +36,10 @@ After creating and registering your test, remember to register it with CTest by 
 ```cmake
 # Remember to add -S to print the test name while it is executed even if it passes, otherwise
 # CTest won't be able to detect the results of the test correctly.
-add_test(NAME MyTest COMMAND verso-tests --filter "My test name" -S)
+add_test(NAME MyTest COMMAND $<TARGET_FILE:verso-tests> --filter "My test name" -S)
 set_tests_properties(MyTest PROPERTIES
         TIMEOUT 10
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
         PASS_REGULAR_EXPRESSION "\\[ OK \\]"
         FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
     )

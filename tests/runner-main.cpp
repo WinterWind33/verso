@@ -22,9 +22,10 @@ void print_help() {
     std::cout << "--verbose\t  Prints verbose logging" << ENDL;
     std::cout << "-S\t\t  Print successful tests (off by default)" << ENDL;
     std::cout << "--list\t\t  Prints the list of registered tests and exits" << ENDL;
-    std::cout << "--filter <filter> Runs only the tests that match the given filter (can be "
-                 "specified multiple times)"
-              << ENDL;
+    std::cout
+        << "--filter <filter> Runs only the tests that exactly match the given filter (can be "
+           "specified multiple times)"
+        << ENDL;
 }
 
 void print_no_tests_warning() {
@@ -46,6 +47,7 @@ int main(int argc, char* argv[]) {
         const std::string_view arg_sv{arg};
         if (arg_sv == "--help" || arg_sv == "-h") {
             print_help = true;
+            nextArgFilter = false;
             // Help has always the priority.
             break;
         }
