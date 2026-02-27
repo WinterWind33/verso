@@ -1,5 +1,5 @@
 # Copyright (c) 2025-2026 Andrea Ballestrazzi
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 project(verso
     VERSION 0.1.0
@@ -22,5 +22,6 @@ add_library(verso INTERFACE ${VERSO_INCLUDE_FILES})
 target_include_directories(verso INTERFACE include)
 
 if (VERSO_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif()
