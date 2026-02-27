@@ -30,3 +30,31 @@ Right after your test class, you can automatically register the test using the `
 ```cpp
 VERSO_REGISTER_TEST(MyTest)
 ```
+
+After creating and registering your test, remember to register it with CTest by adding the following line to the `tests/CMakeLists.txt` file:
+
+```cmake
+verso_add_runner_test(verso.MyTest "class test name")
+```
+
+## Running the tests
+
+To run the tests, simply execute the `verso-tests` binary:
+
+```bash
+# Run all tests
+# -S prints the tests name while they are executed even if they pass
+./verso-tests -S
+
+# Run a specific test by name
+./verso-tests -S --filter "My test name"
+```
+
+Or, you can run the tests using CTest:
+
+```bash
+cd build/tests
+
+# Run all tests
+ctest -C Debug
+```

@@ -242,9 +242,10 @@ constexpr auto components(const Version auto& version) {
 /**
  * @brief The current version of the library, using the default version type.
  *  To honor this library, the library version will always be represented only by a "version"
- *  object, single components (major, minor, patch) will not be exposed directly.
+ *  object, single components (major, minor, patch) will not be exposed using separate variables or
+ *  constants.
  */
-constexpr version verso_version{0, 1, 0};
+constexpr version verso_version{0, 2, 0};
 
 // ### Comparison operators ###
 // Reference: https://semver.org/#spec-item-11

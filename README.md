@@ -35,7 +35,7 @@ git submodule update --init --recursive
 After this, you can use CMake to include verso in your project:
 
 ```cmake
-# You need to have CMake 3.16+
+# You need to have CMake 3.19+
 add_subdirectory(path/to/verso)
 target_link_libraries(your_target PRIVATE verso)
 ```
