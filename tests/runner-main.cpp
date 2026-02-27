@@ -18,10 +18,13 @@ namespace verso::tests {
 void print_help() {
     std::cout << "verso library tests runner" << ENDL;
     std::cout << ENDL;
-    std::cout << "-h, --help\tPrints this help page" << ENDL;
-    std::cout << "--verbose\tPrints verbose logging" << ENDL;
-    std::cout << "-S\t\tPrint successful tests (off by default)" << ENDL;
-    std::cout << "--list\t\tPrints the list of registered tests and exits" << ENDL;
+    std::cout << "-h, --help\t  Prints this help page" << ENDL;
+    std::cout << "--verbose\t  Prints verbose logging" << ENDL;
+    std::cout << "-S\t\t  Print successful tests (off by default)" << ENDL;
+    std::cout << "--list\t\t  Prints the list of registered tests and exits" << ENDL;
+    std::cout << "--filter <filter> Runs only the tests that match the given filter (can be "
+                 "specified multiple times)"
+              << ENDL;
 }
 
 void print_no_tests_warning() {
@@ -41,6 +44,12 @@ int main(int argc, char* argv[]) {
     // Iterate over arguments to see if we need to print also successful tests.
     for (const auto* const arg : std::span(argv, static_cast<std::size_t>(argc))) {
         const std::string_view arg_sv{arg};
+        if (arg_sv == "--help" || arg_sv == "-h") {
+            print_help = true;
+            // Help has always the priority.
+            break;
+        }
+
         if (nextArgFilter) {
             // This means that the previous argument was "--filter", so we are expecting this
             // argument to be the filter for the tests to run.
@@ -57,12 +66,6 @@ int main(int argc, char* argv[]) {
             }
             filters.push_back(arg_sv);
             nextArgFilter = false;
-        }
-
-        if (arg_sv == "--help" || arg_sv == "-h") {
-            print_help = true;
-            // Help has always the priority.
-            break;
         }
 
         if (arg_sv == "--list") {
@@ -137,24 +140,17 @@ int main(int argc, char* argv[]) {
         assert(test);
 
         // If filters are specified, we only run the tests that match at least one filter.
-        bool skip{};
-        for (const auto filter : filters) {
-            if (std::none_of(std::cbegin(filters), std::cend(filters),
-                             [&test, filter](const auto& f) {
-                                 // Filter should match the test name exactly, otherwise it would be
-                                 // confusing.
-                                 return test->name() == f;
-                             })) {
-                skip = true;
-                break;
-            }
-        }
-
-        if (skip) {
+        if (!filters.empty() &&
+            std::none_of(std::cbegin(filters), std::cend(filters), [&test](const auto& f) {
+                // Filter should match the test name exactly, otherwise it would be
+                // confusing.
+                return test->name() == f;
+            })) {
             if (verbose_output) {
                 std::cout << "[ INFO ] Skipping test \"" << test->name()
                           << "\" since it doesn't match any filter." << ENDL;
             }
+
             continue;
         }
 

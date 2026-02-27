@@ -31,7 +31,7 @@ Right after your test class, you can automatically register the test using the `
 VERSO_REGISTER_TEST(MyTest)
 ```
 
-After creating and registering your test, remember to register it to CTest by adding the following line to the `tests/CMakeLists.txt` file:
+After creating and registering your test, remember to register it with CTest by adding the following line to the `tests/CMakeLists.txt` file:
 
 ```cmake
 # Remember to add -S to print the test name while it is executed even if it passes, otherwise
