@@ -4,6 +4,7 @@
 
 // C++ STL
 #include <algorithm>
+#include <compare>
 #include <concepts>
 #include <cstdint>
 #include <format>
@@ -330,6 +331,30 @@ static_assert(version{1, 0, 0} > version{0, 1, 0});
 static_assert(version{1, 1, 0} > version{1, 0, 0});
 static_assert(version{1, 1, 1} > version{1, 1, 0});
 static_assert(version{2, 0, 0} > version{1, 1, 1});
+
+/**
+ * @brief Three-way comparison operator for versions. This operator returns a std::strong_ordering
+ * value that indicates the relative order of the two versions.
+ */
+constexpr std::strong_ordering operator<=>(const Version auto& lhs,
+                                           const Version auto& rhs) noexcept {
+    if (lhs.major() != rhs.major()) {
+        return lhs.major() <=> rhs.major();
+    }
+    if (lhs.minor() != rhs.minor()) {
+        return lhs.minor() <=> rhs.minor();
+    }
+    return lhs.patch() <=> rhs.patch();
+}
+
+static_assert((version{} <=> version{}) == std::strong_ordering::equal);
+static_assert((version{} <=> version{1, 0, 0}) == std::strong_ordering::less);
+static_assert((version{1, 0, 0} <=> version{1, 0, 0}) == std::strong_ordering::equal);
+static_assert((version{1, 0, 0} <=> version{1, 1, 0}) == std::strong_ordering::less);
+static_assert((version{1, 1, 0} <=> version{1, 1, 0}) == std::strong_ordering::equal);
+static_assert((version{1, 1, 1} <=> version{1, 1, 0}) == std::strong_ordering::greater);
+static_assert((version{1, 1, 1} <=> version{1, 1, 1}) == std::strong_ordering::equal);
+static_assert((version{1, 1, 1} <=> version{2, 0, 0}) == std::strong_ordering::less);
 
 // ### To and from string functions ###
 
