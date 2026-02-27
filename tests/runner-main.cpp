@@ -119,7 +119,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    bool execution_succeeded{true};
     const auto& all_tests{verso::tests::Test::get_all_tests()};
     if (all_tests.empty()) {
         verso::tests::print_no_tests_warning();
@@ -137,6 +136,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    bool execution_succeeded{true}, any_test_run{};
     // Simply retrieve all registered tests and run them.
     for (const auto& test : all_tests) {
         assert(test);
@@ -160,6 +160,7 @@ int main(int argc, char* argv[]) {
             std::cout << "[ INFO ] Running test \"" << test->name() << "\"..." << ENDL;
         }
         test->run();
+        any_test_run = true;
 
         // If the test has not succeeded, print the failure reasons.
         if (!test->succeeded()) {
@@ -179,6 +180,11 @@ int main(int argc, char* argv[]) {
             // Print the successful test only if requested or if we are in verbose mode.
             std::cout << "[ OK ] Test \"" << test->name() << "\"" << ENDL;
         }
+    }
+
+    if (!any_test_run) {
+        std::cout << "[ ERROR ] No tests were run." << ENDL;
+        return 1;
     }
 
     if (execution_succeeded) {

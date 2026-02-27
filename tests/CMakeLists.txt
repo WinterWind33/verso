@@ -19,34 +19,20 @@ if(VERSO_BUILD_TESTS)
     target_link_libraries(verso-tests PRIVATE verso)
     target_include_directories(verso-tests PRIVATE .)
 
+    function(verso_add_runner_test name filter)
+        add_test(NAME ${name} COMMAND $<TARGET_FILE:verso-tests> --filter "${filter}" -S)
+        set_tests_properties(${name} PROPERTIES
+            TIMEOUT 10
+            WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
+            PASS_REGULAR_EXPRESSION "\\[ OK \\]"
+            FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
+        )
+    endfunction()
+
     # Register the test executable with CTest.
-    add_test(NAME verso.basic_version_tests COMMAND $<TARGET_FILE:verso-tests> --filter "basic_version class tests" -S)
-    set_tests_properties(verso.basic_version_tests PROPERTIES
-        TIMEOUT 10
-        WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
-        PASS_REGULAR_EXPRESSION "\\[ OK \\]"
-        FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
-    )
-    add_test(NAME verso.from_string_tests COMMAND $<TARGET_FILE:verso-tests> --filter "from_string() function tests" -S)
-    set_tests_properties(verso.from_string_tests PROPERTIES
-        TIMEOUT 10
-        WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
-        PASS_REGULAR_EXPRESSION "\\[ OK \\]"
-        FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
-    )
-    add_test(NAME verso.to_string_tests COMMAND $<TARGET_FILE:verso-tests> --filter "to_string() function tests" -S)
-    set_tests_properties(verso.to_string_tests PROPERTIES
-        TIMEOUT 10
-        WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
-        PASS_REGULAR_EXPRESSION "\\[ OK \\]"
-        FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
-    )
-    add_test(NAME verso.comparison_operators_tests COMMAND $<TARGET_FILE:verso-tests> --filter "comparison operators tests" -S)
-    set_tests_properties(verso.comparison_operators_tests PROPERTIES
-        TIMEOUT 10
-        WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
-        PASS_REGULAR_EXPRESSION "\\[ OK \\]"
-        FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
-    )
+    verso_add_runner_test(verso.basic_version_tests "basic_version class tests")
+    verso_add_runner_test(verso.from_string_tests "from_string() function tests")
+    verso_add_runner_test(verso.to_string_tests "to_string() function tests")
+    verso_add_runner_test(verso.comparison_operators_tests "comparison operators tests")
 
 endif() # VERSO_BUILD_TESTS
