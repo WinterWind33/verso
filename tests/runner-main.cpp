@@ -2,10 +2,12 @@
 #include "test.hpp"
 
 // C++ STL
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <span>
 #include <string_view>
+#include <vector>
 
 constexpr char ENDL{'\n'};
 
@@ -33,10 +35,30 @@ int main(int argc, char* argv[]) {
     bool verbose_output{};
     bool print_help{};
     bool list_tests_only{};
+    bool nextArgFilter{};
+    std::vector<std::string_view> filters{};
 
     // Iterate over arguments to see if we need to print also successful tests.
     for (const auto* const arg : std::span(argv, static_cast<std::size_t>(argc))) {
         const std::string_view arg_sv{arg};
+        if (nextArgFilter) {
+            // This means that the previous argument was "--filter", so we are expecting this
+            // argument to be the filter for the tests to run.
+            if (arg_sv.empty()) {
+                std::cerr << "[ ERROR ] The filter argument cannot be empty." << ENDL;
+                return 1;
+            }
+
+            // Check that the filter doesn't start with a dash, otherwise it would be confused with
+            // another argument.
+            if (arg_sv.starts_with('-')) {
+                std::cerr << "[ ERROR ] The filter argument cannot start with a dash." << ENDL;
+                return 1;
+            }
+            filters.push_back(arg_sv);
+            nextArgFilter = false;
+        }
+
         if (arg_sv == "--help" || arg_sv == "-h") {
             print_help = true;
             // Help has always the priority.
@@ -54,6 +76,19 @@ int main(int argc, char* argv[]) {
         if (arg_sv == "-S") {
             print_successful_tests = true;
         }
+
+        if (arg_sv == "--filter") {
+            // The next argument should be the filtered test name, so we need to check if it exists
+            // and if it is not empty.
+            nextArgFilter = true;
+            continue;
+        }
+    }
+
+    if (nextArgFilter) {
+        // This means that the last argument was "--filter", but we didn't receive the filter value.
+        std::cerr << "[ ERROR ] The --filter argument requires a value." << ENDL;
+        return 1;
     }
 
     if (print_help) {
@@ -90,9 +125,38 @@ int main(int argc, char* argv[]) {
     // of new tests to prevent tests from being registered while we are running them.
     verso::tests::Test::lock_registration();
 
+    if (verbose_output && !filters.empty()) {
+        std::cout << "[ INFO ] Running tests with the following filters: " << ENDL;
+        for (const auto filter : filters) {
+            std::cout << " - \"" << filter << '\"' << ENDL;
+        }
+    }
+
     // Simply retrieve all registered tests and run them.
     for (const auto& test : all_tests) {
         assert(test);
+
+        // If filters are specified, we only run the tests that match at least one filter.
+        bool skip{};
+        for (const auto filter : filters) {
+            if (std::none_of(std::cbegin(filters), std::cend(filters),
+                             [&test, filter](const auto& f) {
+                                 // Filter should match the test name exactly, otherwise it would be
+                                 // confusing.
+                                 return test->name() == f;
+                             })) {
+                skip = true;
+                break;
+            }
+        }
+
+        if (skip) {
+            if (verbose_output) {
+                std::cout << "[ INFO ] Skipping test \"" << test->name()
+                          << "\" since it doesn't match any filter." << ENDL;
+            }
+            continue;
+        }
 
         if (verbose_output) {
             std::cout << "[ INFO ] Running test \"" << test->name() << "\"..." << ENDL;
