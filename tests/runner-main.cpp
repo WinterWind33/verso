@@ -21,6 +21,11 @@ void print_help() {
     std::cout << "-S\t\tPrint successful tests (off by default)" << ENDL;
     std::cout << "--list\t\tPrints the list of registered tests and exits" << ENDL;
 }
+
+void print_no_tests_warning() {
+    std::cout << "[ WARNING ] No tests registered." << ENDL;
+}
+
 } // namespace verso::tests
 
 int main(int argc, char* argv[]) {
@@ -60,7 +65,7 @@ int main(int argc, char* argv[]) {
     if (list_tests_only) {
         const auto& all_tests{verso::tests::Test::get_all_tests()};
         if (all_tests.empty()) {
-            std::cout << "[ WARNING ] No test registered." << ENDL;
+            verso::tests::print_no_tests_warning();
             return 0;
         }
 
@@ -77,7 +82,7 @@ int main(int argc, char* argv[]) {
     bool execution_succeeded{true};
     const auto& all_tests{verso::tests::Test::get_all_tests()};
     if (all_tests.empty()) {
-        std::cout << "[ WARNING ] No test registered." << ENDL;
+        verso::tests::print_no_tests_warning();
         return 0;
     }
 
