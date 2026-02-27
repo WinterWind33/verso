@@ -28,7 +28,7 @@ ver.minor(1); // Now version is 2.1.0
 ver.patch(3); // Now version is 2.1.3
 ```
 
-You can fully compare versions using the standard comparison operators:
+You can fully compare versions using the standard comparison operators (even the three-way comparison operator if your compiler supports it):
 
 ```cpp
 // Comparing versions
@@ -41,6 +41,7 @@ bool isLess = (ver1 < ver2); // true
 bool isLessEqual = (ver1 <= ver2); // true
 bool isGreater = (ver1 > ver2); // false
 bool isGreaterEqual = (ver1 >= ver2); // false
+auto cmp = (ver1 <=> ver2); // std::strong_ordering::less
 
 ```
 

@@ -109,6 +109,45 @@ public:
             test_false("version4 <= version1", version4 <= version1);
             test_true("version4 <= version4", version4 <= version4);
         }
+
+        // Three-way comparison operator
+        {
+            test_true("version1 <=> version1 == std::strong_ordering::equal",
+                      (version1 <=> version1) == std::strong_ordering::equal);
+            test_true("version1 <=> version2 == std::strong_ordering::less",
+                      (version1 <=> version2) == std::strong_ordering::less);
+            test_true("version1 <=> version3 == std::strong_ordering::less",
+                      (version1 <=> version3) == std::strong_ordering::less);
+            test_true("version1 <=> version4 == std::strong_ordering::less",
+                      (version1 <=> version4) == std::strong_ordering::less);
+
+            test_true("version2 <=> version1 == std::strong_ordering::greater",
+                      (version2 <=> version1) == std::strong_ordering::greater);
+            test_true("version2 <=> version2 == std::strong_ordering::equal",
+                      (version2 <=> version2) == std::strong_ordering::equal);
+            test_true("version2 <=> version3 == std::strong_ordering::less",
+                      (version2 <=> version3) == std::strong_ordering::less);
+            test_true("version2 <=> version4 == std::strong_ordering::less",
+                      (version2 <=> version4) == std::strong_ordering::less);
+
+            test_true("version3 <=> version1 == std::strong_ordering::greater",
+                      (version3 <=> version1) == std::strong_ordering::greater);
+            test_true("version3 <=> version2 == std::strong_ordering::greater",
+                      (version3 <=> version2) == std::strong_ordering::greater);
+            test_true("version3 <=> version3 == std::strong_ordering::equal",
+                      (version3 <=> version3) == std::strong_ordering::equal);
+            test_true("version3 <=> version4 == std::strong_ordering::less",
+                      (version3 <=> version4) == std::strong_ordering::less);
+
+            test_true("version4 <=> version1 == std::strong_ordering::greater",
+                      (version4 <=> version1) == std::strong_ordering::greater);
+            test_true("version4 <=> version2 == std::strong_ordering::greater",
+                      (version4 <=> version2) == std::strong_ordering::greater);
+            test_true("version4 <=> version3 == std::strong_ordering::greater",
+                      (version4 <=> version3) == std::strong_ordering::greater);
+            test_true("version4 <=> version4 == std::strong_ordering::equal",
+                      (version4 <=> version4) == std::strong_ordering::equal);
+        }
     }
 };
 
