@@ -5,8 +5,9 @@
 #include <cassert>
 #include <iostream>
 #include <span>
+#include <string_view>
 
-constexpr std::string_view ENDL{"\n"};
+constexpr char ENDL{'\n'};
 
 namespace verso::tests {
 /**
@@ -18,6 +19,7 @@ void print_help() {
     std::cout << "-h, --help\tPrints this help page" << ENDL;
     std::cout << "--verbose\tPrints verbose logging" << ENDL;
     std::cout << "-S\t\tPrint successful tests (off by default)" << ENDL;
+    std::cout << "--list\t\tPrints the list of registered tests and exits" << ENDL;
 }
 } // namespace verso::tests
 
@@ -25,6 +27,7 @@ int main(int argc, char* argv[]) {
     bool print_successful_tests{};
     bool verbose_output{};
     bool print_help{};
+    bool list_tests_only{};
 
     // Iterate over arguments to see if we need to print also successful tests.
     for (const auto* const arg : std::span(argv, static_cast<std::size_t>(argc))) {
@@ -33,6 +36,10 @@ int main(int argc, char* argv[]) {
             print_help = true;
             // Help has always the priority.
             break;
+        }
+
+        if (arg_sv == "--list") {
+            list_tests_only = true;
         }
 
         if (arg_sv == "--verbose") {
@@ -45,7 +52,25 @@ int main(int argc, char* argv[]) {
     }
 
     if (print_help) {
+        // Help has the priority over everything else, so we print it and exit immediately.
         verso::tests::print_help();
+        return 0;
+    }
+
+    if (list_tests_only) {
+        const auto& all_tests{verso::tests::Test::get_all_tests()};
+        if (all_tests.empty()) {
+            std::cout << "[ WARNING ] No test registered." << ENDL;
+            return 0;
+        }
+
+        std::cout << "Registered tests:" << ENDL;
+        for (const auto& test : all_tests) {
+            assert(test);
+            std::cout << " - " << test->name() << ENDL;
+        }
+
+        // We should not run any test, so we can exit immediately after printing the list of tests.
         return 0;
     }
 
