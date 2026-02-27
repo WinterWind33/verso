@@ -34,15 +34,7 @@ VERSO_REGISTER_TEST(MyTest)
 After creating and registering your test, remember to register it with CTest by adding the following line to the `tests/CMakeLists.txt` file:
 
 ```cmake
-# Remember to add -S to print the test name while it is executed even if it passes, otherwise
-# CTest won't be able to detect the results of the test correctly.
-add_test(NAME MyTest COMMAND $<TARGET_FILE:verso-tests> --filter "My test name" -S)
-set_tests_properties(MyTest PROPERTIES
-        TIMEOUT 10
-        WORKING_DIRECTORY $<TARGET_FILE_DIR:verso-tests>
-        PASS_REGULAR_EXPRESSION "\\[ OK \\]"
-        FAIL_REGULAR_EXPRESSION "\\[ ERROR \\]"
-    )
+verso_add_runner_test(verso.MyTest "class test name")
 ```
 
 ## Running the tests
