@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 project(verso
-    VERSION 0.1.0
+    VERSION 0.2.0
     DESCRIPTION "A C++ library for semantic versioning"
     LANGUAGES CXX
 )
