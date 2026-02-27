@@ -335,6 +335,10 @@ static_assert(version{2, 0, 0} > version{1, 1, 1});
 /**
  * @brief Three-way comparison operator for versions. This operator returns a std::strong_ordering
  * value that indicates the relative order of the two versions.
+ *
+ * @param lhs The left-hand side version.
+ * @param rhs The right-hand side version.
+ * @return A std::strong_ordering value indicating the relative order of the two versions.
  */
 constexpr std::strong_ordering operator<=>(const Version auto& lhs,
                                            const Version auto& rhs) noexcept {
