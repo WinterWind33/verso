@@ -20,9 +20,9 @@ jobs:
         run: sudo apt-get install -y cmake g++
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix['build-type'] }} -DCMAKE_CXX_COMPILER=${{ matrix['compiler'] }} -DVERSO_BUILD_TESTS=ON.
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix['build-type'] }} -DCMAKE_CXX_COMPILER=${{ matrix['compiler'] }} -DVERSO_BUILD_TESTS=ON
 
-      - name: Build
+      - name: Build all targets
         run: cmake --build build --config ${{ matrix['build-type'] }} -- -j$(nproc)
 
       - name: Run tests
