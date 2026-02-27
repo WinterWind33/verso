@@ -1,0 +1,26 @@
+# Copyright (c) 2025-2026 Andrea Ballestrazzi
+name: MacOS x64 Clang Build
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build-type: [Release, Debug]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix['build-type'] }} -DVERSO_BUILD_TESTS=ON
+
+      - name: Build all targets
+        run: cmake --build build --config ${{ matrix['build-type'] }} -- -j$(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        run: |
+          ./build/tests/verso-tests -S
