@@ -157,7 +157,72 @@ class PrereleaseComparisonTests final : public Test {
 public:
     PrereleaseComparisonTests() noexcept : Test{"prerelease comparison tests"} {}
 
-    void run() override {}
+    void run() override {
+        using version_test_type = version;
+
+        // All the following tests respect the specification at: https://semver.org/#spec-item-11
+
+        const version_test_type version1{1, 0, 0};
+        const version_test_type version2{1, 0, 0, "alpha"};
+        const version_test_type version3{1, 0, 0, "beta"};
+        const version_test_type version4{1, 0, 0, "45"};
+        const version_test_type version5{1, 0, 0, "3"};
+        const version_test_type version6{1, 0, 0, "alpha.14.789"};
+
+        // Strictly greater than operator
+        {
+            test_true("version1 > version2", version1 > version2);
+            test_true("version1 > version3", version1 > version3);
+            test_true("version1 > version4", version1 > version4);
+            test_true("version1 > version5", version1 > version5);
+            test_true("version1 > version6", version1 > version6);
+
+            test_false("version2 > version1", version2 > version1);
+            test_false("version2 > version3", version2 > version3);
+            // Pre-release identifiers consisting of only digits have lower precedence than those
+            // with letters, so "alpha" < "45" (Specification 11.4.3)
+            test_true("version2 > version4", version2 > version4);
+            test_true("version2 > version5", version2 > version5);
+
+            // In this case, rule 11.4.4 applies, so version 6 is greater than version 2, because
+            // "alpha.14.789" has more identifiers than "alpha", and the first 1 identifier is
+            // equal.
+            test_false("version2 > version6", version2 > version6);
+
+            test_false("version3 > version1", version3 > version1);
+            // Rule 11.4.2 applies, so "beta" > "alpha"
+            test_true("version3 > version2", version3 > version2);
+            test_true("version3 > version4",
+                      version3 > version4); // Rule 11.4.3 applies, so "beta" > "45"
+            test_true("version3 > version5",
+                      version3 > version5); // Rule 11.4.3 applies, so "beta" > "3"
+            test_true("version3 > version6",
+                      version3 > version6); // Rule 11.4.2 applies, so "beta" > "alpha.14.789"
+
+            test_false("version4 > version1", version4 > version1);
+            test_false("version4 > version2", version4 > version2);
+            test_false("version4 > version3", version4 > version3);
+            // Rule 11.4.1 applies, so "45" > "3"
+            test_true("version4 > version5", version4 > version5);
+            test_false("version4 > version6", version4 > version6);
+
+            test_false("version5 > version1", version5 > version1);
+            test_false("version5 > version2", version5 > version2);
+            test_false("version5 > version3", version5 > version3);
+            test_false("version5 > version4", version5 > version4);
+            test_false("version5 > version6", version5 > version6);
+
+            test_false("version6 > version1", version6 > version1);
+            // Rule 11.4.4 applies, so "alpha.14.789" > "alpha"
+            test_true("version6 > version2", version6 > version2);
+            // Rule 11.4.2 applies, so "alpha.14.789" > "beta"
+            test_false("version6 > version3", version6 > version3);
+            // Rule 11.4.3 applies, so "alpha.14.789" > "45"
+            test_true("version6 > version4", version6 > version4);
+            // Rule 11.4.3 applies, so "alpha.14.789" > "3"
+            test_true("version6 > version5", version6 > version5);
+        }
+    }
 };
 
 VERSO_REGISTER_TEST(PrereleaseComparisonTests);
