@@ -21,6 +21,11 @@ set(VERSO_INCLUDE_FILES
 add_library(verso INTERFACE ${VERSO_INCLUDE_FILES})
 target_include_directories(verso INTERFACE include)
 
+# If on Linux or MacOS, compile with warnings as errors
+if (UNIX)
+    target_compile_options(verso INTERFACE -Wall -Wextra -Werror)
+endif()
+
 if (VERSO_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
