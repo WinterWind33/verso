@@ -23,10 +23,12 @@ const auto minor = ver.minor; // 0
 const auto patch = ver.patch; // 0
 
 // Setting version numbers
-ver.major(2); // Now version is 2.0.0
-ver.minor(1); // Now version is 2.1.0
-ver.patch(3); // Now version is 2.1.3
+ver.major = 2; // Now version is 2.0.0
+ver.minor = 1; // Now version is 2.1.0
+ver.patch = 3; // Now version is 2.1.3
 ```
+
+It really is just a simple structure.
 
 You can fully compare versions using the standard comparison operators (even the three-way comparison operator if your compiler supports it):
 
