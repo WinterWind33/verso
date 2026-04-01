@@ -57,6 +57,10 @@ static_assert(Version<version32>);
 static_assert(Version<version64>);
 } // namespace version_concept_tests
 
+namespace constant_version_concept_tests {
+static_assert(Version<constant_version>);
+} // namespace constant_version_concept_tests
+
 namespace components_function_tests {
 static_assert(std::same_as<decltype(components(version{})),
                            std::tuple<default_normal_version_number_component,
@@ -66,6 +70,18 @@ static_assert(std::same_as<decltype(components(version{})),
 static_assert(std::get<0>(components(version{1, 2, 3})) == 1);
 static_assert(std::get<1>(components(version{1, 2, 3})) == 2);
 static_assert(std::get<2>(components(version{1, 2, 3})) == 3);
+
+static_assert(
+    std::same_as<
+        decltype(components(constant_version{})),
+        std::tuple<default_normal_version_number_component, default_normal_version_number_component,
+                   default_normal_version_number_component, std::optional<std::string_view>,
+                   std::optional<std::string_view>>>);
+static_assert(std::get<0>(components(constant_version{1, 2, 3, "alpha", "build"})) == 1);
+static_assert(std::get<1>(components(constant_version{1, 2, 3, "alpha", "build"})) == 2);
+static_assert(std::get<2>(components(constant_version{1, 2, 3, "alpha", "build"})) == 3);
+static_assert(std::get<3>(components(constant_version{1, 2, 3, "alpha", "build"})) == "alpha");
+static_assert(std::get<4>(components(constant_version{1, 2, 3, "alpha", "build"})) == "build");
 } // namespace components_function_tests
 
 } // namespace verso::tests
