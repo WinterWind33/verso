@@ -137,6 +137,8 @@ struct basic_version {
     using major_t = typename traits_t::major_t;
     using minor_t = typename traits_t::minor_t;
     using patch_t = typename traits_t::patch_t;
+    using prerelease_string_t = typename traits_t::prerelease_string_t;
+    using build_metadata_string_t = typename traits_t::build_metadata_string_t;
 
     /**
      * @brief Major version number.
@@ -152,6 +154,21 @@ struct basic_version {
      * @brief Patch version number.
      */
     patch_t patch{};
+
+    /**
+     * @brief Pre-release string. This is an optional field that can be used to indicate that a
+     * version is a pre-release version. If this field is not empty, the version is considered a
+     * pre-release version and has lower precedence than the same version without the pre-release
+     * string.
+     */
+    std::optional<prerelease_string_t> prerelease_data{};
+
+    /**
+     * @brief Build metadata string. This is an optional field that can be used to indicate
+     * additional build information. If this field is not empty, it does not affect the version
+     * precedence.
+     */
+    std::optional<build_metadata_string_t> build_metadata{};
 
     constexpr bool operator==(const basic_version& other) const noexcept = default;
 };
