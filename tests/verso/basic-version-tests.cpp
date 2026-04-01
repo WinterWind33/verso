@@ -15,35 +15,25 @@ public:
 
         // Default construction
         {
-            version_test_type version{};
-            test_equal("Default construction - major number", version.major(), std::uint8_t{});
-            test_equal("Default construction - minor number", version.minor(), std::uint16_t{});
-            test_equal("Default construction - patch number", version.patch(), 0u);
+            const version_test_type version{};
+            test_equal("Default construction - major number", version.major, std::uint8_t{});
+            test_equal("Default construction - minor number", version.minor, std::uint16_t{});
+            test_equal("Default construction - patch number", version.patch, 0u);
         }
         // Construction with parameters
         {
-            version_test_type version{1, 2, 3};
-            test_equal("Construction with parameters - major number", version.major(),
+            const version_test_type version{1, 2, 3};
+            test_equal("Construction with parameters - major number", version.major,
                        std::uint8_t{1});
-            test_equal("Construction with parameters - minor number", version.minor(),
+            test_equal("Construction with parameters - minor number", version.minor,
                        std::uint16_t{2});
-            test_equal("Construction with parameters - patch number", version.patch(), 3u);
-        }
-        // Setters
-        {
-            version_test_type version{};
-            version.major(1);
-            version.minor(2);
-            version.patch(3);
-            test_equal("Setters - major number", version.major(), std::uint8_t{1});
-            test_equal("Setters - minor number", version.minor(), std::uint16_t{2});
-            test_equal("Setters - patch number", version.patch(), 3u);
+            test_equal("Construction with parameters - patch number", version.patch, 3u);
         }
         // Equality operator
         {
-            version_test_type version1{1, 2, 3};
-            version_test_type version2{1, 2, 3};
-            version_test_type version3{1, 2, 4};
+            const version_test_type version1{1, 2, 3};
+            const version_test_type version2{1, 2, 3};
+            const version_test_type version3{1, 2, 4};
             test_true("Equality operator - equal versions should be equal", version1 == version2);
             test_true("Equality operator - equal versions - operands order should not matter",
                       version2 == version1);

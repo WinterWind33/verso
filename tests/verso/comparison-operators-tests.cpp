@@ -13,10 +13,10 @@ public:
         using version_test_traits = version_traits<std::uint8_t, std::uint16_t, std::uint32_t>;
         using version_test_type = basic_version<version_test_traits>;
 
-        version_test_type version1{1, 0, 0};
-        version_test_type version2{1, 1, 0};
-        version_test_type version3{1, 1, 1};
-        version_test_type version4{2, 0, 0};
+        const version_test_type version1{1, 0, 0};
+        const version_test_type version2{1, 1, 0};
+        const version_test_type version3{1, 1, 1};
+        const version_test_type version4{2, 0, 0};
 
         // Strictly greater than operator
         {

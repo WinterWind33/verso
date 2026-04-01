@@ -44,7 +44,53 @@ And you're ready to go!
 
 ## Getting started with verso
 
-You can find a getting started guide in the [docs/getting-started.md](docs/getting-started.md) file.
+To get started with verso, just include the header file in your C++ source code:
+
+```cpp
+#include <verso/verso.hpp>
+```
+
+And then you can start using the classes and functions in the `verso` namespace:
+
+```cpp
+verso::version ver{1, 2, 3}; // Creates a version 1.2.3
+
+// Setting version numbers
+ver.major = 2; // Now version is 2.2.3
+ver.minor = 1; // Now version is 2.1.3
+ver.patch = 3; // Now version is 2.1.3
+std::cout << "Version: " << verso::to_string(ver) << '\n'; // Version: 2.1.3
+```
+
+Structured bindings:
+
+```cpp
+// Structured binding
+auto [major, minor, patch] = ver; // major = 2, minor = 1, patch = 3
+```
+
+Getting components as a tuple:
+
+```cpp
+// As a std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>
+const auto version_tuple = verso::components(ver); // std::tuple{2, 1, 3}
+const auto major = std::get<0>(version_tuple); // 2
+const auto minor = std::get<1>(version_tuple); // 1
+const auto patch = std::get<2>(version_tuple); // 3
+```
+
+Parsing versions from strings:
+
+```cpp
+std::optional<verso::version> parsed_ver = verso::from_string<verso::version>("1.43.5");
+assert(parsed_ver.has_value());
+
+const auto major = parsed_ver->major; // 1
+const auto minor = parsed_ver->minor; // 43
+const auto patch = parsed_ver->patch; // 5
+```
+
+You can find the full getting started guide in the [docs/getting-started.md](docs/getting-started.md) file.
 
 ## Development documentation
 

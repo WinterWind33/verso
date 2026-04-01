@@ -90,92 +90,28 @@ using default_version_traits =
  */
 template <typename TraitsT>
     requires VersionTraits<TraitsT>
-class basic_version final {
-public:
+struct basic_version {
     using traits_t = std::decay_t<TraitsT>;
     using major_t = typename traits_t::major_t;
     using minor_t = typename traits_t::minor_t;
     using patch_t = typename traits_t::patch_t;
 
     /**
-     * @brief Default constructor, initializes the version to 0.0.0.
+     * @brief Major version number.
      */
-    constexpr basic_version() noexcept = default;
+    major_t major{};
 
     /**
-     * @brief Constructor with major, minor and patch version numbers.
+     * @brief Minor version number.
      */
-    constexpr basic_version(major_t major, minor_t minor, patch_t patch) noexcept
-        : m_major{major},
-          m_minor{minor},
-          m_patch{patch} {}
-
-    // ### Getters ###
+    minor_t minor{};
 
     /**
-     * @brief Get the major version number.
-     *
-     * @return The major version number.
+     * @brief Patch version number.
      */
-    [[nodiscard]] constexpr major_t major() const noexcept {
-        return m_major;
-    }
+    patch_t patch{};
 
-    /**
-     * @brief Get the minor version number.
-     *
-     * @return The minor version number.
-     */
-    [[nodiscard]] constexpr minor_t minor() const noexcept {
-        return m_minor;
-    }
-
-    /**
-     * @brief Get the patch version number.
-     *
-     * @return The patch version number.
-     */
-    [[nodiscard]] constexpr patch_t patch() const noexcept {
-        return m_patch;
-    }
-
-    // ### Setters ###
-
-    /**
-     * @brief Set the major version number.
-     *
-     * @param major The new major version number.
-     */
-    constexpr void major(const major_t major) noexcept {
-        m_major = major;
-    }
-
-    /**
-     * @brief Set the minor version number.
-     *
-     * @param minor The new minor version number.
-     */
-    constexpr void minor(const minor_t minor) noexcept {
-        m_minor = minor;
-    }
-
-    /**
-     * @brief Set the patch version number.
-     *
-     * @param patch The new patch version number.
-     */
-    constexpr void patch(const patch_t patch) noexcept {
-        m_patch = patch;
-    }
-
-    // ### Comparison operators ###
-
-    [[nodiscard]] constexpr bool operator==(const basic_version& other) const noexcept = default;
-
-private:
-    major_t m_major{};
-    minor_t m_minor{};
-    patch_t m_patch{};
+    constexpr bool operator==(const basic_version& other) const noexcept = default;
 };
 
 /**
@@ -227,14 +163,13 @@ using version64 = uniform_version<std::uint64_t>;
 
 /**
  * @brief Get the components of a version as a tuple (major, minor, patch).
- *  This can be useful for structured bindings.
  *
  * @tparam VersionT A type that satisfies the Version concept.
  * @param version The version instance.
  * @return A tuple containing the major, minor and patch version numbers.
  */
 constexpr auto components(const Version auto& version) {
-    return std::make_tuple(version.major(), version.minor(), version.patch());
+    return std::make_tuple(version.major, version.minor, version.patch);
 }
 
 // ### This library version ###
@@ -245,7 +180,7 @@ constexpr auto components(const Version auto& version) {
  *  object, single components (major, minor, patch) will not be exposed using separate variables or
  *  constants.
  */
-constexpr version verso_version{0, 2, 0};
+constexpr version verso_version{0, 3, 0};
 
 // ### Comparison operators ###
 // Reference: https://semver.org/#spec-item-11
@@ -259,13 +194,13 @@ constexpr version verso_version{0, 2, 0};
  * @return true if lhs is less than rhs, false otherwise.
  */
 constexpr bool operator<(const Version auto& lhs, const Version auto& rhs) noexcept {
-    if (lhs.major() != rhs.major()) {
-        return lhs.major() < rhs.major();
+    if (lhs.major != rhs.major) {
+        return lhs.major < rhs.major;
     }
-    if (lhs.minor() != rhs.minor()) {
-        return lhs.minor() < rhs.minor();
+    if (lhs.minor != rhs.minor) {
+        return lhs.minor < rhs.minor;
     }
-    return lhs.patch() < rhs.patch();
+    return lhs.patch < rhs.patch;
 }
 
 // Static assertions for documentation purposes.
@@ -343,13 +278,13 @@ static_assert(version{2, 0, 0} > version{1, 1, 1});
  */
 constexpr std::strong_ordering operator<=>(const Version auto& lhs,
                                            const Version auto& rhs) noexcept {
-    if (lhs.major() != rhs.major()) {
-        return lhs.major() <=> rhs.major();
+    if (lhs.major != rhs.major) {
+        return lhs.major <=> rhs.major;
     }
-    if (lhs.minor() != rhs.minor()) {
-        return lhs.minor() <=> rhs.minor();
+    if (lhs.minor != rhs.minor) {
+        return lhs.minor <=> rhs.minor;
     }
-    return lhs.patch() <=> rhs.patch();
+    return lhs.patch <=> rhs.patch;
 }
 
 static_assert((version{} <=> version{}) == std::strong_ordering::equal);
@@ -381,8 +316,8 @@ constexpr char VERSION_STRING_SEPARATOR{'.'};
  * @return A string representation of the version.
  */
 auto to_string(const Version auto& version) {
-    return std::format("{}{}{}{}{}", version.major(), VERSION_STRING_SEPARATOR, version.minor(),
-                       VERSION_STRING_SEPARATOR, version.patch());
+    return std::format("{}{}{}{}{}", version.major, VERSION_STRING_SEPARATOR, version.minor,
+                       VERSION_STRING_SEPARATOR, version.patch);
 }
 
 namespace details {

@@ -19,6 +19,11 @@ if(VERSO_BUILD_TESTS)
     target_link_libraries(verso-tests PRIVATE verso)
     target_include_directories(verso-tests PRIVATE .)
 
+    # If on Linux or macOS, compile with warnings as errors
+    if (UNIX)
+        target_compile_options(verso-tests PRIVATE -Wall -Wextra -Werror)
+    endif()
+
     function(verso_add_runner_test name filter)
         add_test(NAME ${name} COMMAND $<TARGET_FILE:verso-tests> --filter "${filter}" -S)
         set_tests_properties(${name} PROPERTIES

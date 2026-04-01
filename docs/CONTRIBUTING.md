@@ -4,7 +4,7 @@ Thank you for your interest in contributing to Verso! We welcome contributions f
 
 ## How to Contribute
 
-1. **Fork the repository** and create your branch from `v0.2.x`.
+1. **Fork the repository** and create your branch from `v0.3.x`.
 2. **Make your changes** with clear, concise commits.
 3. **Test your changes** to ensure they work as expected.
 4. **Open a Pull Request** with a detailed description of your changes.
