@@ -9,9 +9,11 @@
 #include <cstdint>
 #include <format>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 namespace verso {
 
@@ -301,6 +303,117 @@ constexpr constant_version verso_version{0, 3, 0, "dev"};
 // Reference: https://semver.org/#spec-item-11
 // All the following operators strictly follow the specification.
 
+namespace details {
+
+// Helper function to check if a character is a valid digit for a version number.
+constexpr bool is_valid_version_number_digit(const char c) noexcept {
+    return c >= '0' && c <= '9';
+}
+
+static_assert(is_valid_version_number_digit('0'));
+static_assert(is_valid_version_number_digit('9'));
+static_assert(!is_valid_version_number_digit('a'));
+static_assert(!is_valid_version_number_digit(' '));
+static_assert(!is_valid_version_number_digit('-'));
+
+/**
+ * @brief Check if a prerelease identifier is numeric.
+ *
+ * @tparam PrereleaseStringT The type of the prerelease identifier string.
+ * @param identifier The prerelease identifier string.
+ * @return true if the identifier is numeric, false otherwise.
+ */
+constexpr bool is_prerelease_identifier_numeric(const PrereleaseString auto& identifier) {
+    if (identifier.empty()) {
+        return false;
+    }
+
+    // As pointed out in the Backus-Naur form of the specification:
+    // <pre-release identifier> ::= <alphanumeric identifier> | <numeric identifier>
+    // And
+    // <numeric identifier> ::= "0"
+    //                | <positive digit>
+    //                | <positive digit><digits>
+    // So we cannot have leading zeros nor negative numbers, and we must have at least one digit.
+
+    if (identifier.size() > 1 && identifier[0] == '0') {
+        return false; // Leading zero
+    }
+
+    for (const char c : identifier) {
+        if (!is_valid_version_number_digit(c)) {
+            return false;
+        }
+    }
+    return true;
+}
+static_assert(is_prerelease_identifier_numeric<std::string_view>("0"));
+static_assert(is_prerelease_identifier_numeric<std::string_view>("1234567890"));
+static_assert(!is_prerelease_identifier_numeric<std::string_view>(""));
+static_assert(!is_prerelease_identifier_numeric<std::string_view>("a123"));
+static_assert(!is_prerelease_identifier_numeric<std::string_view>("-23"));
+
+constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
+                                               const PrereleaseString auto& rhs) {
+    // Precedence for two pre-release versions with the same major, minor, and patch version MUST be
+    // determined by comparing each dot separated identifier from left to right until a difference
+    // is found as follows:
+    // 1. Identifiers consisting of only digits are compared numerically.
+    // 2. Identifiers with letters or hyphens are compared lexically in ASCII sort order.
+    // 3. Numeric identifiers always have lower precedence than non-numeric identifiers.
+    // 4. A larger set of pre-release fields has a higher precedence than a smaller set, if all of
+    // the preceding identifiers are equal.
+    // Reference: https://semver.org/#spec-item-11
+    auto parts1 = lhs | std::views::split('.') | std::views::transform([](auto&& part) {
+                      return std::string{part.data(), part.size()};
+                  });
+    std::vector<std::string> splitView1{parts1.begin(), parts1.end()};
+
+    auto parts2 = rhs | std::views::split('.') | std::views::transform([](auto&& part) {
+                      return std::string{part.data(), part.size()};
+                  });
+    std::vector<std::string> splitView2{parts2.begin(), parts2.end()};
+
+    auto it1 = std::begin(splitView1);
+    auto it2 = std::begin(splitView2);
+    for (; it1 != std::end(splitView1) && it2 != std::end(splitView2); ++it1, ++it2) {
+        const std::string_view identifier1{*it1};
+        const std::string_view identifier2{*it2};
+
+        if (is_prerelease_identifier_numeric<std::string_view>(identifier1) &&
+            is_prerelease_identifier_numeric<std::string_view>(identifier2)) {
+            // As per specification 11.4.1, numeric identifiers are compared numerically.
+            const std::uint64_t num1{std::stoull(std::string(identifier1))};
+            const std::uint64_t num2{std::stoull(std::string(identifier2))};
+            // We can't return directly, because if numbers are equal, we need to continue to the
+            // next identifier.
+            if (num1 != num2) {
+                return num1 < num2;
+            }
+        } else {
+            // We can't just compare with operator > directly because if the identifiers are equal,
+            // we need to continue to the next identifier.
+            if (identifier1 != identifier2) {
+                // Just compare them lexicographically, as per specification 11.4.2.
+                return identifier1 < identifier2;
+            }
+        }
+    }
+
+    // If we're here, it means that all the compared identifiers are equal. In this case, the
+    // version with more identifiers has higher precedence, as per specification 11.4.4.
+    return splitView1.size() < splitView2.size();
+}
+
+static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha", "beta"));
+static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha", "alpha.1"));
+static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.2"));
+static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.beta"));
+static_assert(is_prelease_strictly_lower_than<std::string_view>("13", "alpha"));
+static_assert(is_prelease_strictly_lower_than<std::string_view>("13", "45"));
+
+} // namespace details
+
 /**
  * @brief Less-than comparison operator for versions.
  *
@@ -315,7 +428,27 @@ constexpr bool operator<(const Version auto& lhs, const Version auto& rhs) noexc
     if (lhs.minor != rhs.minor) {
         return lhs.minor < rhs.minor;
     }
-    return lhs.patch < rhs.patch;
+    if (lhs.patch != rhs.patch) {
+        return lhs.patch < rhs.patch;
+    }
+    if (lhs.prerelease_data && !rhs.prerelease_data) {
+        // A version with a pre-release string has lower precedence than the same version without
+        // a pre-release string, as per specification 11.3.
+        return true;
+    }
+    if (!lhs.prerelease_data && rhs.prerelease_data) {
+        // A version without a pre-release string has higher precedence than the same version with
+        // a pre-release string, as per specification 11.3.
+        return false;
+    }
+    if (lhs.prerelease_data && rhs.prerelease_data) {
+        // If both versions have a pre-release string, we need to compare them according to the
+        // specification 11.4.
+        return details::is_prelease_strictly_lower_than(lhs.prerelease_data.value(),
+                                                        rhs.prerelease_data.value());
+    }
+
+    return false;
 }
 
 // Static assertions for documentation purposes.
@@ -384,8 +517,8 @@ static_assert(version{1, 1, 1} > version{1, 1, 0});
 static_assert(version{2, 0, 0} > version{1, 1, 1});
 
 /**
- * @brief Three-way comparison operator for versions. This operator returns a std::strong_ordering
- * value that indicates the relative order of the two versions.
+ * @brief Three-way comparison operator for versions. This operator returns a
+ * std::strong_ordering value that indicates the relative order of the two versions.
  *
  * @param lhs The left-hand side version.
  * @param rhs The right-hand side version.
@@ -436,16 +569,6 @@ auto to_string(const Version auto& version) {
 }
 
 namespace details {
-// Helper function to check if a character is a valid digit for a version number.
-constexpr bool is_valid_version_number_digit(const char c) noexcept {
-    return c >= '0' && c <= '9';
-}
-
-static_assert(is_valid_version_number_digit('0'));
-static_assert(is_valid_version_number_digit('9'));
-static_assert(!is_valid_version_number_digit('a'));
-static_assert(!is_valid_version_number_digit(' '));
-static_assert(!is_valid_version_number_digit('-'));
 
 // Helper function to check if a string_view represents a valid normal version number
 // (i.e., a non-negative integer without leading zeros unless it's "0").
@@ -475,9 +598,10 @@ static_assert(!is_valid_normal_version_number("-23"));
 } // namespace details
 
 /**
- * @brief Convert a string to a version. The string MUST be in the format "major.minor.patch",
- *  where major, minor and patch are non-negative integers without leading zeros unless the number
- * is zero. If the given string is not valid, returns std::nullopt.
+ * @brief Convert a string to a version. The string MUST be in the format
+ * "major.minor.patch", where major, minor and patch are non-negative integers without
+ * leading zeros unless the number is zero. If the given string is not valid, returns
+ * std::nullopt.
  *
  * @tparam VersionT A type that satisfies the Version concept.
  * @param versionStr The string to convert.
@@ -521,8 +645,8 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
     // Handle the last component (or the only one if there are no dots).
     if (const std::string_view lastToken{startIt, std::cend(versionStr)};
         details::is_valid_normal_version_number(lastToken)) {
-        // This should only be the patch number because we suppose that major and minor are already
-        // set.
+        // This should only be the patch number because we suppose that major and minor are
+        // already set.
         patch = static_cast<typename VersionT::patch_t>(std::stoul(std::string(lastToken)));
     }
 
