@@ -222,6 +222,51 @@ public:
             // Rule 11.4.3 applies, so "alpha.14.789" > "3"
             test_true("version6 > version5", version6 > version5);
         }
+
+        // Greater or equal operator
+        {
+            test_true("version1 >= version1", version1 >= version1);
+            test_true("version1 >= version2", version1 >= version2);
+            test_true("version1 >= version3", version1 >= version3);
+            test_true("version1 >= version4", version1 >= version4);
+            test_true("version1 >= version5", version1 >= version5);
+            test_true("version1 >= version6", version1 >= version6);
+
+            test_false("version2 >= version1", version2 >= version1);
+            test_true("version2 >= version2", version2 >= version2);
+            test_false("version2 >= version3", version2 >= version3);
+            test_true("version2 >= version4", version2 >= version4);
+            test_true("version2 >= version5", version2 >= version5);
+            test_false("version2 >= version6", version2 >= version6);
+
+            test_false("version3 >= version1", version3 >= version1);
+            test_true("version3 >= version2", version3 >= version2);
+            test_true("version3 >= version3", version3 >= version3);
+            test_true("version3 >= version4", version3 >= version4);
+            test_true("version3 >= version5", version3 >= version5);
+            test_true("version3 >= version6", version3 >= version6);
+
+            test_false("version4 >= version1", version4 >= version1);
+            test_false("version4 >= version2", version4 >= version2);
+            test_false("version4 >= version3", version4 >= version3);
+            test_true("version4 >= version4", version4 >= version4);
+            test_true("version4 >= version5", version4 >= version5);
+            test_false("version4 >= version6", version4 >= version6);
+
+            test_false("version5 >= version1", version5 >= version1);
+            test_false("version5 >= version2", version5 >= version2);
+            test_false("version5 >= version3", version5 >= version3);
+            test_false("version5 >= version4", version5 >= version4);
+            test_true("version5 >= version5", version5 >= version5);
+            test_false("version5 >= version6", version5 >= version6);
+
+            test_false("version6 >= version1", version6 >= version1);
+            test_true("version6 >= version2", version6 >= version2);
+            test_false("version6 >= version3", version6 >= version3);
+            test_true("version6 >= version4", version6 >= version4);
+            test_true("version6 >= version5", version6 >= version5);
+            test_true("version6 >= version6", version6 >= version6);
+        }
     }
 };
 
