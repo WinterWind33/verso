@@ -18,9 +18,9 @@ After that, you can freely use classes and function you can find in the `verso` 
 verso::version ver{1, 0, 0}; // Creates a version 1.0.0
 
 // Using version numbers
-const auto major = ver.major(); // 1
-const auto minor = ver.minor(); // 0
-const auto patch = ver.patch(); // 0
+const auto major = ver.major; // 1
+const auto minor = ver.minor; // 0
+const auto patch = ver.patch; // 0
 
 // Setting version numbers
 ver.major(2); // Now version is 2.0.0
