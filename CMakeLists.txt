@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 project(verso
-    VERSION 0.2.0
+    VERSION 0.3.0
     DESCRIPTION "A C++ library for semantic versioning"
     LANGUAGES CXX
 )
@@ -20,11 +20,6 @@ set(VERSO_INCLUDE_FILES
 
 add_library(verso INTERFACE ${VERSO_INCLUDE_FILES})
 target_include_directories(verso INTERFACE include)
-
-# If on Linux or MacOS, compile with warnings as errors
-if (UNIX)
-    target_compile_options(verso INTERFACE -Wall -Wextra -Werror)
-endif()
 
 if (VERSO_BUILD_TESTS)
     enable_testing()

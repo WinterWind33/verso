@@ -82,7 +82,7 @@ const auto patch = std::get<2>(version_tuple); // 3
 Parsing versions from strings:
 
 ```cpp
-std::optional<verso::version> parsed_ver = verso::from_string("1.43.5");
+std::optional<verso::version> parsed_ver = verso::from_string<verso::version>("1.43.5");
 assert(parsed_ver.has_value());
 
 const auto major = parsed_ver->major; // 1
