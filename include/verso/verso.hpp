@@ -174,17 +174,43 @@ struct basic_version {
 };
 
 /**
- * @brief Concept for a version. A version MUST be a basic_version instantiated with
- *  a type that satisfies the VersionTraits concept.
+ * @brief Concept for a version supported by this library. A version MUST have the following
+ * members:
+ * - major: the major version number, of a type that satisfies the NormalVersionNumberComponent
+ * concept.
+ * - minor: the minor version number, of a type that satisfies the NormalVersionNumberComponent
+ * concept.
+ * - patch: the patch version number, of a type that satisfies the NormalVersionNumberComponent
+ * concept.
+ * - prerelease_data: an optional field that can be used to indicate that a version is a pre-release
+ * version, of a type that satisfies the PrereleaseString concept.
+ * - build_metadata: an optional field that can be used to indicate additional build information, of
+ * a type that satisfies the BuildMetadataString concept.
  *
  * @tparam VersionT The type to check.
  */
 template <typename VersionT>
 concept Version = requires {
-    // Must have a nested traits_t type that satisfies the VersionTraits concept.
-    typename std::decay_t<VersionT>::traits_t;
-    requires VersionTraits<typename std::decay_t<VersionT>::traits_t>;
-} && std::same_as<VersionT, basic_version<typename std::decay_t<VersionT>::traits_t>>;
+    typename VersionT::major_t;
+    typename VersionT::minor_t;
+    typename VersionT::patch_t;
+    typename VersionT::prerelease_string_t;
+    typename VersionT::build_metadata_string_t;
+
+    requires NormalVersionNumberComponent<typename VersionT::major_t>;
+    requires NormalVersionNumberComponent<typename VersionT::minor_t>;
+    requires NormalVersionNumberComponent<typename VersionT::patch_t>;
+    requires PrereleaseString<typename VersionT::prerelease_string_t>;
+    requires BuildMetadataString<typename VersionT::build_metadata_string_t>;
+} && requires(VersionT v) {
+    { v.major } -> std::same_as<typename VersionT::major_t&>;
+    { v.minor } -> std::same_as<typename VersionT::minor_t&>;
+    { v.patch } -> std::same_as<typename VersionT::patch_t&>;
+    { v.prerelease_data } -> std::same_as<std::optional<typename VersionT::prerelease_string_t>&>;
+    {
+        v.build_metadata
+    } -> std::same_as<std::optional<typename VersionT::build_metadata_string_t>&>;
+};
 
 /**
  * @brief Alias for version which has all the version numbers with the same types.
@@ -195,10 +221,38 @@ template <NormalVersionNumberComponent NormalVersionNumberComponentT>
 using uniform_version = basic_version<default_version_traits<NormalVersionNumberComponentT>>;
 
 /**
+ * @brief Special alias for version which has all the version numbers with the same types and all
+ * the other components as constant strings. This can be useful to define versions that are known at
+ * compile time.
+ *
+ * @note Be careful using this on runtime contexts, because prerelease and build metadata data are
+ * stored as string views, so they must point to valid strings for the entire lifetime of the
+ * version object.
+ *
+ * @tparam NormalVersionNumberComponentT The type of the version numbers.
+ */
+template <NormalVersionNumberComponent NormalVersionNumberComponentT>
+using uniform_constant_version = basic_version<
+    version_traits<NormalVersionNumberComponentT, NormalVersionNumberComponentT,
+                   NormalVersionNumberComponentT, std::string_view, std::string_view>>;
+
+/**
  * @brief Default specialization of basic_version with the default normal
  *  version number (std::uint32_t)
  */
 using version = uniform_version<default_normal_version_number_component>;
+static_assert(Version<version>);
+
+/**
+ * @brief Special alias for a version with all the version numbers as the default normal version
+ * number component and all the other components as constant strings. This can be useful to define
+ * versions that are known at compile time.
+ *
+ * @note Be careful using this on runtime contexts, because prerelease and build metadata data are
+ * stored as string views, so they must point to valid strings for the entire lifetime of the
+ * version object.
+ */
+using constant_version = uniform_constant_version<default_normal_version_number_component>;
 
 /**
  * @brief Version with all normal version numbers type equal to std::uint8_t.
@@ -221,25 +275,27 @@ using version32 = uniform_version<std::uint32_t>;
 using version64 = uniform_version<std::uint64_t>;
 
 /**
- * @brief Get the components of a version as a tuple (major, minor, patch).
+ * @brief Get the components of a version as a tuple (major, minor, patch, prerelease_data,
+ * build_metadata).
  *
  * @tparam VersionT A type that satisfies the Version concept.
  * @param version The version instance.
- * @return A tuple containing the major, minor and patch version numbers.
+ * @return A tuple containing the major, minor, patch version numbers, prerelease data, and build
+ * metadata.
  */
 constexpr auto components(const Version auto& version) {
-    return std::make_tuple(version.major, version.minor, version.patch);
+    return std::make_tuple(version.major, version.minor, version.patch, version.prerelease_data,
+                           version.build_metadata);
 }
 
 // ### This library version ###
 
 /**
- * @brief The current version of the library, using the default version type.
- *  To honor this library, the library version will always be represented only by a "version"
- *  object, single components (major, minor, patch) will not be exposed using separate variables or
- *  constants.
+ * @brief The current version of the library, currently in development.
+ *  To honor this library, when not in development, the library version will always be represented
+ *  only by a "version" object.
  */
-constexpr version verso_version{0, 3, 0};
+constexpr constant_version verso_version{0, 3, 0, "dev"};
 
 // ### Comparison operators ###
 // Reference: https://semver.org/#spec-item-11

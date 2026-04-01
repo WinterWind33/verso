@@ -61,7 +61,8 @@ namespace components_function_tests {
 static_assert(std::same_as<decltype(components(version{})),
                            std::tuple<default_normal_version_number_component,
                                       default_normal_version_number_component,
-                                      default_normal_version_number_component>>);
+                                      default_normal_version_number_component,
+                                      std::optional<std::string>, std::optional<std::string>>>);
 static_assert(std::get<0>(components(version{1, 2, 3})) == 1);
 static_assert(std::get<1>(components(version{1, 2, 3})) == 2);
 static_assert(std::get<2>(components(version{1, 2, 3})) == 3);
