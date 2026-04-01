@@ -40,8 +40,39 @@ static_assert(NormalVersionNumberComponent<std::uint64_t>);
 using default_normal_version_number_component = std::uint32_t;
 
 /**
+ * @brief Concept representing a pre-release string. Pre-release identifiers are used in pre-release
+ * versions, which are versions that are not considered stable and are usually used for testing or
+ * development purposes.
+ *
+ * Pre-release data is regulated by the specification https://semver.org/#spec-item-9.
+ *
+ * @tparam PrereleaseStringType The type to check.
+ */
+template <typename PrereleaseStringType>
+concept PrereleaseString = std::convertible_to<PrereleaseStringType, std::string_view>;
+
+static_assert(PrereleaseString<std::string_view>);
+static_assert(PrereleaseString<std::string>);
+
+/**
+ * @brief Concept representing a build metadata string. Build metadata is used to provide additional
+ * information about a version, such as build date, commit hash, etc.. Build metadata is ignored
+ * when determining version precedence.
+ *
+ *  Build metadata is regulated by the specification https://semver.org/#spec-item-10.
+ *
+ * @tparam BuildMetadataStringType The type to check.
+ */
+template <typename BuildMetadataStringType>
+concept BuildMetadataString = std::convertible_to<BuildMetadataStringType, std::string_view>;
+
+static_assert(BuildMetadataString<std::string_view>);
+static_assert(BuildMetadataString<std::string>);
+
+/**
  * @brief Concept for version traits. Version traits MUST define the types used for the major, minor
  * and patch version numbers, and these types MUST satisfy the NormalVersionNumberComponent concept.
+ * It also defines the types used for pre-release and build metadata strings.
  *
  * @tparam TraitsT The traits type to check.
  */
@@ -50,10 +81,14 @@ concept VersionTraits = requires {
     typename TraitsT::major_t;
     typename TraitsT::minor_t;
     typename TraitsT::patch_t;
+    typename TraitsT::prerelease_string_t;
+    typename TraitsT::build_metadata_string_t;
 
     requires NormalVersionNumberComponent<typename TraitsT::major_t>;
     requires NormalVersionNumberComponent<typename TraitsT::minor_t>;
     requires NormalVersionNumberComponent<typename TraitsT::patch_t>;
+    requires PrereleaseString<typename TraitsT::prerelease_string_t>;
+    requires BuildMetadataString<typename TraitsT::build_metadata_string_t>;
 };
 
 /**
@@ -63,13 +98,20 @@ concept VersionTraits = requires {
  * @tparam MajorT The type used for the major version number.
  * @tparam MinorT The type used for the minor version number.
  * @tparam PatchT The type used for the patch version number.
+ * @tparam PrereleaseStringT The type used for the pre-release string. It MUST satisfy the
+ *  PrereleaseString concept. It defaults to std::string.
+ * @tparam BuildMetadataStringT The type used for the build metadata string. It MUST satisfy the
+ *  BuildMetadataString concept. It defaults to std::string.
  */
 template <NormalVersionNumberComponent MajorT, NormalVersionNumberComponent MinorT,
-          NormalVersionNumberComponent PatchT>
+          NormalVersionNumberComponent PatchT, PrereleaseString PrereleaseStringT = std::string,
+          BuildMetadataString BuildMetadataStringT = std::string>
 struct version_traits {
     using major_t = std::decay_t<MajorT>;
     using minor_t = std::decay_t<MinorT>;
     using patch_t = std::decay_t<PatchT>;
+    using prerelease_string_t = std::decay_t<PrereleaseStringT>;
+    using build_metadata_string_t = std::decay_t<BuildMetadataStringT>;
 };
 
 /**
