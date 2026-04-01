@@ -19,7 +19,7 @@ if(VERSO_BUILD_TESTS)
     target_link_libraries(verso-tests PRIVATE verso)
     target_include_directories(verso-tests PRIVATE .)
 
-    # If on Linux or MacOS, compile with warnings as errors
+    # If on Linux or macOS, compile with warnings as errors
     if (UNIX)
         target_compile_options(verso-tests PRIVATE -Wall -Wextra -Werror)
     endif()

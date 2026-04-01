@@ -108,7 +108,6 @@ struct basic_version {
 
     /**
      * @brief Patch version number.
-     *
      */
     patch_t patch{};
 
