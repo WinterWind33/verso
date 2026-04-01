@@ -152,4 +152,14 @@ public:
 };
 
 VERSO_REGISTER_TEST(ComparisonOperatorsTests);
+
+class PrereleaseComparisonTests final : public Test {
+public:
+    PrereleaseComparisonTests() noexcept : Test{"prerelease comparison tests"} {}
+
+    void run() override {}
+};
+
+VERSO_REGISTER_TEST(PrereleaseComparisonTests);
+
 } // namespace verso::tests
