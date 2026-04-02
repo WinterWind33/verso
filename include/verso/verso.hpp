@@ -317,6 +317,13 @@ constexpr constant_version verso_version{0, 3, 0, "dev"};
 // Reference: https://semver.org/#spec-item-11
 // All the following operators strictly follow the specification.
 
+/**
+ * @brief Semantic version string separator.
+ *
+ * Reference: https://semver.org/#spec-item-2
+ */
+constexpr char VERSION_STRING_SEPARATOR{'.'};
+
 namespace details {
 
 // Helper function to check if a character is a valid digit for a version number.
@@ -375,14 +382,16 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
     // 4. A larger set of pre-release fields has a higher precedence than a smaller set, if all of
     // the preceding identifiers are equal.
     // Reference: https://semver.org/#spec-item-11
-    auto parts1 = lhs | std::views::split('.') | std::views::transform([](auto&& part) {
-                      return std::string{part.data(), part.size()};
-                  });
+    auto parts1 =
+        lhs | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
+            return std::string{part.data(), part.size()};
+        });
     std::vector<std::string> splitView1{parts1.begin(), parts1.end()};
 
-    auto parts2 = rhs | std::views::split('.') | std::views::transform([](auto&& part) {
-                      return std::string{part.data(), part.size()};
-                  });
+    auto parts2 =
+        rhs | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
+            return std::string{part.data(), part.size()};
+        });
     std::vector<std::string> splitView2{parts2.begin(), parts2.end()};
 
     auto it1 = std::begin(splitView1);
@@ -557,12 +566,105 @@ static_assert((version{1, 1, 1} <=> version{2, 0, 0}) == std::strong_ordering::l
 
 // ### To and from string functions ###
 
-/**
- * @brief Semantic version string separator.
- *
- * Reference: https://semver.org/#spec-item-2
- */
-constexpr char VERSION_STRING_SEPARATOR{'.'};
+namespace details {
+
+constexpr bool is_alnum_or_hyphen(const char c) noexcept {
+    return c == '-' || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
+static_assert(is_alnum_or_hyphen('a'));
+static_assert(is_alnum_or_hyphen('Z'));
+static_assert(is_alnum_or_hyphen('0'));
+static_assert(is_alnum_or_hyphen('-'));
+static_assert(!is_alnum_or_hyphen(' '));
+static_assert(!is_alnum_or_hyphen('!'));
+static_assert(!is_alnum_or_hyphen(VERSION_STRING_SEPARATOR));
+
+constexpr bool is_identifier_valid(const SupportedString auto& id,
+                                   const bool canIncludeLeadingZeroes) noexcept {
+    if (id.empty()) {
+        return false; // Identifiers must not be empty.
+    }
+
+    if (!canIncludeLeadingZeroes && id.size() > 1 && id[0] == '0') {
+        return false; // Leading zeroes are not allowed for normal version numbers.
+    }
+
+    for (const char c : id) {
+        if (!details::is_alnum_or_hyphen(c)) {
+            return false; // Identifiers must consist of alphanumeric characters and hyphens only.
+        }
+    }
+    return true;
+}
+
+static_assert(is_identifier_valid<std::string_view>("alpha", false));
+static_assert(is_identifier_valid<std::string_view>("alpha", false));
+static_assert(is_identifier_valid<std::string_view>("alpha-1", false));
+static_assert(!is_identifier_valid<std::string_view>("", false));
+static_assert(!is_identifier_valid<std::string_view>("01", false));
+static_assert(!is_identifier_valid<std::string_view>("00000001", false));
+static_assert(!is_identifier_valid<std::string_view>("+1", false));
+static_assert(!is_identifier_valid<std::string_view>("1gfd!.", false));
+static_assert(is_identifier_valid<std::string_view>("alpha", true));
+static_assert(is_identifier_valid<std::string_view>("alpha-1", true));
+static_assert(is_identifier_valid<std::string_view>("01", true));
+static_assert(is_identifier_valid<std::string_view>("00000001", true));
+
+} // namespace details
+
+constexpr bool is_valid(const Version auto& ver) noexcept {
+    // A version is valid if its major, minor and patch version numbers are valid, and if its
+    // pre-release data and build metadata are valid according to the specification.
+
+    // Check if pre-release data is valid. It must consist of dot-separated identifiers, where each
+    // identifier is either a non-empty string of alphanumeric characters and hyphens, or a
+    // numeric identifier.
+    if (ver.prerelease_data) {
+        const std::string_view prereleaseData{ver.prerelease_data.value()};
+        auto parts = prereleaseData | std::views::split(VERSION_STRING_SEPARATOR) |
+                     std::views::transform([](auto&& part) {
+                         return std::string{part.data(), part.size()};
+                     });
+        for (const std::string& identifier : parts) {
+            if (!details::is_identifier_valid(identifier, /*can include leading zeros*/ false)) {
+                return false; // Identifiers must be valid according to the specification.
+            }
+        }
+    }
+
+    // Check if build metadata is valid. It must consist of dot-separated identifiers, where each
+    // identifier is a non-empty string of alphanumeric characters and hyphens.
+    if (ver.build_metadata) {
+        const std::string_view buildMetadata{ver.build_metadata.value()};
+        auto parts = buildMetadata | std::views::split(VERSION_STRING_SEPARATOR) |
+                     std::views::transform([](auto&& part) {
+                         return std::string{part.data(), part.size()};
+                     });
+        for (const std::string& identifier : parts) {
+            if (!details::is_identifier_valid(identifier, /*can include leading zeros*/ true)) {
+                return false; // Identifiers must be valid according to the specification.
+            }
+        }
+    }
+    return true;
+}
+
+static_assert(is_valid(version{1, 0, 0}));
+static_assert(is_valid(version{1, 0, 0, "alpha"}));
+static_assert(is_valid(version{1, 0, 0, "alpha.1"}));
+static_assert(is_valid(version{1, 0, 0, "alpha.1", "build.123"}));
+static_assert(is_valid(version{1, 0, 0, "alpha.1", "build.s123-----------"}));
+static_assert(is_valid(version{1, 0, 0, "alpha.1", "20130313144700"}));
+static_assert(is_valid(version{1, 0, 0, "alpha.1", "exp.sha.5114f85"}));
+static_assert(is_valid(version{1, 0, 0, "alpha.1", "21AF26D3----117B344092BD"}));
+static_assert(!is_valid(version{1, 0, 0, "alpha..1"}));
+static_assert(!is_valid(version{1, 0, 0, "alpha.01"}));
+static_assert(!is_valid(version{1, 0, 0, "alpha."}));
+static_assert(!is_valid(version{1, 0, 0, ".!alpha"}));
+static_assert(!is_valid(version{1, 0, 0, "alpha.1", "build..123"}));
+static_assert(!is_valid(version{1, 0, 0, std::nullopt, "awesome-build!"}));
+static_assert(!is_valid(version{1, 0, 0, std::nullopt, "+build.123"}));
 
 /**
  * @brief Convert a version to a string in the format "major.minor.patch".
