@@ -32,6 +32,30 @@ public:
             const auto verStr{to_string(ver)};
             test_equal("to_string(version{10, 20, 30}) result", std::string{"10.20.30"}, verStr);
         }
+        {
+            constexpr constant_version ver{1, 2, 3, "alpha"};
+            const auto verStr{to_string(ver)};
+            test_equal("to_string(version{1, 2, 3, \"alpha\"}) result", std::string{"1.2.3-alpha"},
+                       verStr);
+        }
+        {
+            constexpr constant_version ver{1, 2, 3, "alpha.1"};
+            const auto verStr{to_string(ver)};
+            test_equal("to_string(version{1, 2, 3, \"alpha.1\"}) result",
+                       std::string{"1.2.3-alpha.1"}, verStr);
+        }
+        {
+            constexpr constant_version ver{1, 2, 3, "alpha.1", "build.123"};
+            const auto verStr{to_string(ver)};
+            test_equal("to_string(version{1, 2, 3, \"alpha.1\", \"build.123\"}) result",
+                       std::string{"1.2.3-alpha.1+build.123"}, verStr);
+        }
+        {
+            constexpr constant_version ver{1, 2, 3, std::nullopt, "build.123"};
+            const auto verStr{to_string(ver)};
+            test_equal("to_string(version{1, 2, 3, std::nullopt, \"build.123\"}) result",
+                       std::string{"1.2.3+build.123"}, verStr);
+        }
     }
 };
 

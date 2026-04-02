@@ -175,7 +175,18 @@ struct basic_version {
      */
     std::optional<build_metadata_string_t> build_metadata{};
 
-    constexpr bool operator==(const basic_version& other) const noexcept = default;
+    /**
+     * @brief Equality operator. Two versions are considered equal if their major, minor, patch and
+     * pre-release data are equal. Build metadata is ignored for equality and precedence purposes,
+     * as per specification https://semver.org/#spec-item-10.
+     *
+     * @param other The other version to compare with.
+     * @return true if the versions are equal, false otherwise.
+     */
+    constexpr bool operator==(const basic_version& other) const noexcept {
+        return major == other.major && minor == other.minor && patch == other.patch &&
+               prerelease_data == other.prerelease_data;
+    }
 };
 
 /**
@@ -330,6 +341,7 @@ constexpr bool is_numeric_identifier(const SupportedString auto& identifier) {
         return false;
     }
 
+    // The Backus-Naur Form for a numeric identifier is the following:
     // <numeric identifier> ::= "0"
     //                | <positive digit>
     //                | <positive digit><digits>
@@ -563,8 +575,17 @@ constexpr char VERSION_STRING_SEPARATOR{'.'};
  * @return A string representation of the version.
  */
 auto to_string(const Version auto& version) {
-    return std::format("{}{}{}{}{}", version.major, VERSION_STRING_SEPARATOR, version.minor,
-                       VERSION_STRING_SEPARATOR, version.patch);
+    auto formatStr{std::format("{}{}{}{}{}", version.major, VERSION_STRING_SEPARATOR, version.minor,
+                               VERSION_STRING_SEPARATOR, version.patch)};
+    if (version.prerelease_data) {
+        formatStr += std::format("-{}", version.prerelease_data.value());
+    }
+
+    if (version.build_metadata) {
+        formatStr += std::format("+{}", version.build_metadata.value());
+    }
+
+    return formatStr;
 }
 
 /**
