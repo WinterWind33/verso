@@ -10,6 +10,7 @@
 #include <format>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -598,6 +599,7 @@ constexpr bool is_identifier_valid(const SupportedString auto& id,
     return true;
 }
 
+static_assert(is_identifier_valid<std::string_view>("0", false));
 static_assert(is_identifier_valid<std::string_view>("alpha", false));
 static_assert(is_identifier_valid<std::string_view>("alpha", false));
 static_assert(is_identifier_valid<std::string_view>("alpha-1", false));
@@ -610,6 +612,34 @@ static_assert(is_identifier_valid<std::string_view>("alpha", true));
 static_assert(is_identifier_valid<std::string_view>("alpha-1", true));
 static_assert(is_identifier_valid<std::string_view>("01", true));
 static_assert(is_identifier_valid<std::string_view>("00000001", true));
+static_assert(!is_identifier_valid<std::string_view>("", false));
+
+constexpr bool check_string_identifiers(const SupportedString auto& str,
+                                        const bool canIncludeLeadingZeroes) noexcept {
+    auto parts =
+        str | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
+            return std::string_view{part.data(), part.size()};
+        });
+    if (parts.empty()) {
+        return false; // The string must not be empty.
+    }
+
+    for (const std::string_view identifier : parts) {
+        if (!details::is_identifier_valid(identifier, canIncludeLeadingZeroes)) {
+            return false; // Identifiers must be valid according to the specification.
+        }
+    }
+    return true;
+}
+
+static_assert(check_string_identifiers<std::string_view>("alpha.1", false));
+static_assert(check_string_identifiers<std::string_view>("beta-54", false));
+static_assert(check_string_identifiers<std::string_view>("01.0.0", true));
+static_assert(!check_string_identifiers<std::string_view>("", false));
+static_assert(!check_string_identifiers<std::string_view>("alpha..1", false));
+static_assert(!check_string_identifiers<std::string_view>("alpha.01", false));
+static_assert(!check_string_identifiers<std::string_view>("alpha.", false));
+static_assert(!check_string_identifiers<std::string_view>(".alpha", false));
 
 } // namespace details
 
@@ -620,44 +650,34 @@ constexpr bool is_valid(const Version auto& ver) noexcept {
     // Check if pre-release data is valid. It must consist of dot-separated identifiers, where each
     // identifier is either a non-empty string of alphanumeric characters and hyphens, or a
     // numeric identifier.
-    if (ver.prerelease_data) {
-        const std::string_view prereleaseData{ver.prerelease_data.value()};
-        auto parts = prereleaseData | std::views::split(VERSION_STRING_SEPARATOR) |
-                     std::views::transform([](auto&& part) {
-                         return std::string{part.data(), part.size()};
-                     });
-        for (const std::string& identifier : parts) {
-            if (!details::is_identifier_valid(identifier, /*can include leading zeros*/ false)) {
-                return false; // Identifiers must be valid according to the specification.
-            }
-        }
+    if (ver.prerelease_data &&
+        !details::check_string_identifiers(ver.prerelease_data.value(),
+                                           /* can include leading zeros */ false)) {
+        return false; // Identifiers must be valid according to the specification.
     }
 
     // Check if build metadata is valid. It must consist of dot-separated identifiers, where each
     // identifier is a non-empty string of alphanumeric characters and hyphens.
-    if (ver.build_metadata) {
-        const std::string_view buildMetadata{ver.build_metadata.value()};
-        auto parts = buildMetadata | std::views::split(VERSION_STRING_SEPARATOR) |
-                     std::views::transform([](auto&& part) {
-                         return std::string{part.data(), part.size()};
-                     });
-        for (const std::string& identifier : parts) {
-            if (!details::is_identifier_valid(identifier, /*can include leading zeros*/ true)) {
-                return false; // Identifiers must be valid according to the specification.
-            }
-        }
+    if (ver.build_metadata &&
+        !details::check_string_identifiers(ver.build_metadata.value(),
+                                           /* can include leading zeros */ true)) {
+        return false; // Identifiers must be valid according to the specification.
     }
+
     return true;
 }
 
 static_assert(is_valid(constant_version{1, 0, 0}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha"}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha.1"}));
+static_assert(is_valid(constant_version{1, 0, 0, "-x-y-z"}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "build.123"}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "build.s123-----------"}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "20130313144700"}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "exp.sha.5114f85"}));
 static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "21AF26D3----117B344092BD"}));
+static_assert(!is_valid(constant_version{1, 0, 0, ""}));
+static_assert(!is_valid(constant_version{1, 0, 0, std::nullopt, ""}));
 static_assert(!is_valid(constant_version{1, 0, 0, "alpha..1"}));
 static_assert(!is_valid(constant_version{1, 0, 0, "alpha.01"}));
 static_assert(!is_valid(constant_version{1, 0, 0, "alpha."}));
@@ -667,24 +687,40 @@ static_assert(!is_valid(constant_version{1, 0, 0, std::nullopt, "awesome-build!"
 static_assert(!is_valid(constant_version{1, 0, 0, std::nullopt, "+build.123"}));
 
 /**
- * @brief Convert a version to a string in the format "major.minor.patch".
- *  This follows the semantic versioning specification which states that
- *  version numbers MUST NOT contain leading zeroes.
+ * @brief Convert a version to a string in the format "major.minor.patch" (or
+ * "major.minor.patch-prerelease_data+build_metadata" if pre-release data and build metadata are
+ * present). This follows the semantic versioning specification which states that version numbers
+ * MUST NOT contain leading zeroes. Pre-release data and build metadata are included in the string
+ * if they are present, and formatted according the specification, with a hyphen before the
+ * pre-release data and a plus sign before the build metadata, appending pre-release data first and
+ * then build metadata, if both are present.
  *
- * Reference: https://semver.org/#spec-item-2
+ * @note This function will perform a sanity check before converting the version
+ * to a string, and if the version is not valid, it will throw an exception.
+ *
+ * Reference: https://semver.org/#spec-item-2, https://semver.org/#spec-item-9,
+ * https://semver.org/#spec-item-10
  *
  * @param version The version to convert.
  * @return A string representation of the version.
  */
-auto to_string(const Version auto& version) {
-    auto formatStr{std::format("{}{}{}{}{}", version.major, VERSION_STRING_SEPARATOR, version.minor,
-                               VERSION_STRING_SEPARATOR, version.patch)};
-    if (version.prerelease_data) {
-        formatStr += std::format("-{}", version.prerelease_data.value());
+auto to_string(const Version auto& ver) {
+    // Check version validity before converting it to string. If the version is not valid, we throw
+    // an exception.
+    if (!is_valid(ver)) {
+        throw std::invalid_argument(
+            "Invalid version format. Please, check pre-release and build metadata format according "
+            "to the specification.");
     }
 
-    if (version.build_metadata) {
-        formatStr += std::format("+{}", version.build_metadata.value());
+    auto formatStr{std::format("{}{}{}{}{}", ver.major, VERSION_STRING_SEPARATOR, ver.minor,
+                               VERSION_STRING_SEPARATOR, ver.patch)};
+    if (ver.prerelease_data) {
+        formatStr += std::format("-{}", ver.prerelease_data.value());
+    }
+
+    if (ver.build_metadata) {
+        formatStr += std::format("+{}", ver.build_metadata.value());
     }
 
     return formatStr;
