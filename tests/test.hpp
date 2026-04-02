@@ -5,6 +5,7 @@
 // C++ STL
 #include <concepts>
 #include <format>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -201,6 +202,8 @@ public:
             m_result = false;
         }
     }
+
+    bool test_should_throw(const std::string_view what, const std::function<void()>& func);
 
 protected:
     std::string m_name{};

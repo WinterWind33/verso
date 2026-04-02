@@ -43,4 +43,20 @@ bool Test::test_false(const std::string_view what, const bool condition) {
     return !condition;
 }
 
+bool Test::test_should_throw(const std::string_view what, const std::function<void()>& func) {
+    // Test the function throws an exception.
+    try {
+        func();
+        m_failure_reasons.push_back(
+            std::format("[test_should_throw] {}. Expected an exception to be thrown, but no "
+                        "exception was thrown.",
+                        what));
+        m_result = false;
+    } catch (...) {
+        return true;
+    }
+
+    return false;
+}
+
 } // namespace verso::tests
