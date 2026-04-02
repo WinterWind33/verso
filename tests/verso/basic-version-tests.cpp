@@ -29,7 +29,7 @@ public:
                        std::uint16_t{2});
             test_equal("Construction with parameters - patch number", version.patch, 3u);
         }
-        // Equality operator
+        // Equality operator (on core version data)
         {
             const version_test_type version1{1, 2, 3};
             const version_test_type version2{1, 2, 3};

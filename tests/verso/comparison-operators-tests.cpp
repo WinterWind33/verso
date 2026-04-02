@@ -353,4 +353,60 @@ public:
 
 VERSO_REGISTER_TEST(PrereleaseComparisonTests);
 
+class BuildMetadataComparisonTests final : public Test {
+public:
+    BuildMetadataComparisonTests() noexcept : Test{"build metadata comparison tests"} {}
+
+    void run() override {
+        using version_test_type = version;
+
+        // Build metadata should not affect the precedence of versions, so all the following
+        // comparisons should return equal.
+
+        // Core version data
+        {
+            const version_test_type version1{1, 0, 0};
+            const version_test_type version2{1, 0, 0, std::nullopt, "build.123"};
+            const version_test_type version3{1, 0, 0, std::nullopt, "build.456.E08F45A"};
+
+            // As per specification https://semver.org/#spec-item-10, build metadata should not
+            // affect the precedence of versions, so all the above versions should be considered
+            // equal.
+            test_true("version1 == version2", version1 == version2);
+            test_true("version1 == version3", version1 == version3);
+            test_true("version2 == version3", version2 == version3);
+
+            test_true("version1 <=> version2 == std::strong_ordering::equal",
+                      (version1 <=> version2) == std::strong_ordering::equal);
+            test_true("version1 <=> version3 == std::strong_ordering::equal",
+                      (version1 <=> version3) == std::strong_ordering::equal);
+            test_true("version2 <=> version3 == std::strong_ordering::equal",
+                      (version2 <=> version3) == std::strong_ordering::equal);
+        }
+
+        // Versions with prerelease
+        {
+            const version_test_type version1{1, 0, 0, "alpha"};
+            const version_test_type version2{1, 0, 0, "alpha", "build.123"};
+            const version_test_type version3{1, 0, 0, "alpha", "build.456.E08F45A"};
+
+            // As per specification https://semver.org/#spec-item-10, build metadata should not
+            // affect the precedence of versions, so all the above versions should be considered
+            // equal.
+            test_true("version1 == version2", version1 == version2);
+            test_true("version1 == version3", version1 == version3);
+            test_true("version2 == version3", version2 == version3);
+
+            test_true("version1 <=> version2 == std::strong_ordering::equal",
+                      (version1 <=> version2) == std::strong_ordering::equal);
+            test_true("version1 <=> version3 == std::strong_ordering::equal",
+                      (version1 <=> version3) == std::strong_ordering::equal);
+            test_true("version2 <=> version3 == std::strong_ordering::equal",
+                      (version2 <=> version3) == std::strong_ordering::equal);
+        }
+    }
+};
+
+VERSO_REGISTER_TEST(BuildMetadataComparisonTests);
+
 } // namespace verso::tests
