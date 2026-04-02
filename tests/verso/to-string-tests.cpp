@@ -95,7 +95,6 @@ public:
                                   to_string(brokenVersion);
                               });
         }
-
         {
             const version brokenVersion{1, 2, 3, "alpha", "awesome.build!"};
             test_should_throw(
