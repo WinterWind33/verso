@@ -41,6 +41,9 @@ static_assert(NormalVersionNumberComponent<std::uint64_t>);
  */
 using default_normal_version_number_component = std::uint32_t;
 
+template <typename SupportedStringType>
+concept SupportedString = std::convertible_to<SupportedStringType, std::string_view>;
+
 /**
  * @brief Concept representing a pre-release string. Pre-release identifiers are used in pre-release
  * versions, which are versions that are not considered stable and are usually used for testing or
@@ -51,7 +54,7 @@ using default_normal_version_number_component = std::uint32_t;
  * @tparam PrereleaseStringType The type to check.
  */
 template <typename PrereleaseStringType>
-concept PrereleaseString = std::convertible_to<PrereleaseStringType, std::string_view>;
+concept PrereleaseString = SupportedString<PrereleaseStringType>;
 
 static_assert(PrereleaseString<std::string_view>);
 static_assert(PrereleaseString<std::string>);
@@ -66,7 +69,7 @@ static_assert(PrereleaseString<std::string>);
  * @tparam BuildMetadataStringType The type to check.
  */
 template <typename BuildMetadataStringType>
-concept BuildMetadataString = std::convertible_to<BuildMetadataStringType, std::string_view>;
+concept BuildMetadataString = SupportedString<BuildMetadataStringType>;
 
 static_assert(BuildMetadataString<std::string_view>);
 static_assert(BuildMetadataString<std::string>);
@@ -317,20 +320,16 @@ static_assert(!is_valid_version_number_digit(' '));
 static_assert(!is_valid_version_number_digit('-'));
 
 /**
- * @brief Check if a prerelease identifier is numeric.
+ * @brief Check if an identifier is numeric.
  *
- * @tparam PrereleaseStringT The type of the prerelease identifier string.
- * @param identifier The prerelease identifier string.
+ * @param identifier The identifier string.
  * @return true if the identifier is numeric, false otherwise.
  */
-constexpr bool is_prerelease_identifier_numeric(const PrereleaseString auto& identifier) {
+constexpr bool is_numeric_identifier(const SupportedString auto& identifier) {
     if (identifier.empty()) {
         return false;
     }
 
-    // As pointed out in the Backus-Naur form of the specification:
-    // <pre-release identifier> ::= <alphanumeric identifier> | <numeric identifier>
-    // And
     // <numeric identifier> ::= "0"
     //                | <positive digit>
     //                | <positive digit><digits>
@@ -347,11 +346,11 @@ constexpr bool is_prerelease_identifier_numeric(const PrereleaseString auto& ide
     }
     return true;
 }
-static_assert(is_prerelease_identifier_numeric<std::string_view>("0"));
-static_assert(is_prerelease_identifier_numeric<std::string_view>("1234567890"));
-static_assert(!is_prerelease_identifier_numeric<std::string_view>(""));
-static_assert(!is_prerelease_identifier_numeric<std::string_view>("a123"));
-static_assert(!is_prerelease_identifier_numeric<std::string_view>("-23"));
+static_assert(is_numeric_identifier<std::string_view>("0"));
+static_assert(is_numeric_identifier<std::string_view>("1234567890"));
+static_assert(!is_numeric_identifier<std::string_view>(""));
+static_assert(!is_numeric_identifier<std::string_view>("a123"));
+static_assert(!is_numeric_identifier<std::string_view>("-23"));
 
 constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
                                                const PrereleaseString auto& rhs) {
@@ -380,8 +379,8 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
         const std::string_view identifier1{*it1};
         const std::string_view identifier2{*it2};
 
-        if (is_prerelease_identifier_numeric<std::string_view>(identifier1) &&
-            is_prerelease_identifier_numeric<std::string_view>(identifier2)) {
+        if (is_numeric_identifier<std::string_view>(identifier1) &&
+            is_numeric_identifier<std::string_view>(identifier2)) {
             // As per specification 11.4.1, numeric identifiers are compared numerically.
             const std::uint64_t num1{std::stoull(std::string(identifier1))};
             const std::uint64_t num2{std::stoull(std::string(identifier2))};
@@ -568,35 +567,6 @@ auto to_string(const Version auto& version) {
                        VERSION_STRING_SEPARATOR, version.patch);
 }
 
-namespace details {
-
-// Helper function to check if a string_view represents a valid normal version number
-// (i.e., a non-negative integer without leading zeros unless it's "0").
-constexpr bool is_valid_normal_version_number(const std::string_view str) {
-    if (str.empty()) {
-        return false;
-    }
-    if (str.size() > 1 && str[0] == '0') {
-        return false; // Leading zero
-    }
-    for (const char c : str) {
-        if (!is_valid_version_number_digit(c)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-static_assert(is_valid_normal_version_number("0"));
-static_assert(is_valid_normal_version_number("1"));
-static_assert(is_valid_normal_version_number("1234567890"));
-static_assert(!is_valid_normal_version_number(""));
-static_assert(!is_valid_normal_version_number("01"));
-static_assert(!is_valid_normal_version_number("a123"));
-static_assert(!is_valid_normal_version_number("-23"));
-
-} // namespace details
-
 /**
  * @brief Convert a string to a version. The string MUST be in the format
  * "major.minor.patch", where major, minor and patch are non-negative integers without
@@ -623,7 +593,7 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
     for (; it != std::cend(versionStr);
          it = std::find(startIt, std::cend(versionStr), VERSION_STRING_SEPARATOR)) {
         const std::string_view token{startIt, it};
-        if (!details::is_valid_normal_version_number(token)) {
+        if (!details::is_numeric_identifier(token)) {
             // If it's not a valid normal version number, return std::nullopt directly.
             return std::nullopt;
         }
@@ -644,7 +614,7 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
 
     // Handle the last component (or the only one if there are no dots).
     if (const std::string_view lastToken{startIt, std::cend(versionStr)};
-        details::is_valid_normal_version_number(lastToken)) {
+        details::is_numeric_identifier(lastToken)) {
         // This should only be the patch number because we suppose that major and minor are
         // already set.
         patch = static_cast<typename VersionT::patch_t>(std::stoul(std::string(lastToken)));
