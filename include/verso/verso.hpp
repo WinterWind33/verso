@@ -526,13 +526,13 @@ static_assert(version{2, 0, 0} > version{1, 1, 1});
  */
 constexpr std::strong_ordering operator<=>(const Version auto& lhs,
                                            const Version auto& rhs) noexcept {
-    if (lhs.major != rhs.major) {
-        return lhs.major <=> rhs.major;
+    if (lhs < rhs) {
+        return std::strong_ordering::less;
     }
-    if (lhs.minor != rhs.minor) {
-        return lhs.minor <=> rhs.minor;
+    if (lhs > rhs) {
+        return std::strong_ordering::greater;
     }
-    return lhs.patch <=> rhs.patch;
+    return std::strong_ordering::equal;
 }
 
 static_assert((version{} <=> version{}) == std::strong_ordering::equal);
