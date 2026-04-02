@@ -45,6 +45,19 @@ public:
                        std::string{"1.2.3-alpha.1"}, verStr);
         }
         {
+            constexpr constant_version ver{1, 2, 3, "-x-y-z"};
+            const auto verStr{to_string(ver)};
+            test_equal("to_string(version{1, 2, 3, \"-x-y-z\"}) result",
+                       std::string{"1.2.3--x-y-z"}, verStr);
+        }
+        {
+            constexpr constant_version ver{1, 2, 3, std::nullopt, "21AF26D3----117B344092BD"};
+            const auto verStr{to_string(ver)};
+            test_equal(
+                "to_string(version{1, 2, 3, std::nullopt, \"21AF26D3----117B344092BD\"}) result",
+                std::string{"1.2.3+21AF26D3----117B344092BD"}, verStr);
+        }
+        {
             constexpr constant_version ver{1, 2, 3, "alpha.1", "build.123"};
             const auto verStr{to_string(ver)};
             test_equal("to_string(version{1, 2, 3, \"alpha.1\", \"build.123\"}) result",
@@ -55,6 +68,11 @@ public:
             const auto verStr{to_string(ver)};
             test_equal("to_string(version{1, 2, 3, std::nullopt, \"build.123\"}) result",
                        std::string{"1.2.3+build.123"}, verStr);
+        }
+        {
+            const version ver{1, 2, 3, "alpha", "build.000005"};
+            test_equal("to_string(version{1, 2, 3, \"alpha\", \"build.000005\"})",
+                       std::string{"1.2.3-alpha+build.000005"}, to_string(ver));
         }
         {
             const version brokenVersion{1, 2, 3, "0054"};
@@ -77,11 +95,7 @@ public:
                                   to_string(brokenVersion);
                               });
         }
-        {
-            const version version{1, 2, 3, "alpha", "build.000005"};
-            test_equal("to_string(version{1, 2, 3, \"alpha\", \"build.000005\"})",
-                       std::string{"1.2.3-alpha+build.000005"}, to_string(version));
-        }
+
         {
             const version brokenVersion{1, 2, 3, "alpha", "awesome.build!"};
             test_should_throw(
