@@ -650,21 +650,21 @@ constexpr bool is_valid(const Version auto& ver) noexcept {
     return true;
 }
 
-static_assert(is_valid(version{1, 0, 0}));
-static_assert(is_valid(version{1, 0, 0, "alpha"}));
-static_assert(is_valid(version{1, 0, 0, "alpha.1"}));
-static_assert(is_valid(version{1, 0, 0, "alpha.1", "build.123"}));
-static_assert(is_valid(version{1, 0, 0, "alpha.1", "build.s123-----------"}));
-static_assert(is_valid(version{1, 0, 0, "alpha.1", "20130313144700"}));
-static_assert(is_valid(version{1, 0, 0, "alpha.1", "exp.sha.5114f85"}));
-static_assert(is_valid(version{1, 0, 0, "alpha.1", "21AF26D3----117B344092BD"}));
-static_assert(!is_valid(version{1, 0, 0, "alpha..1"}));
-static_assert(!is_valid(version{1, 0, 0, "alpha.01"}));
-static_assert(!is_valid(version{1, 0, 0, "alpha."}));
-static_assert(!is_valid(version{1, 0, 0, ".!alpha"}));
-static_assert(!is_valid(version{1, 0, 0, "alpha.1", "build..123"}));
-static_assert(!is_valid(version{1, 0, 0, std::nullopt, "awesome-build!"}));
-static_assert(!is_valid(version{1, 0, 0, std::nullopt, "+build.123"}));
+static_assert(is_valid(constant_version{1, 0, 0}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha"}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha.1"}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "build.123"}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "build.s123-----------"}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "20130313144700"}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "exp.sha.5114f85"}));
+static_assert(is_valid(constant_version{1, 0, 0, "alpha.1", "21AF26D3----117B344092BD"}));
+static_assert(!is_valid(constant_version{1, 0, 0, "alpha..1"}));
+static_assert(!is_valid(constant_version{1, 0, 0, "alpha.01"}));
+static_assert(!is_valid(constant_version{1, 0, 0, "alpha."}));
+static_assert(!is_valid(constant_version{1, 0, 0, ".!alpha"}));
+static_assert(!is_valid(constant_version{1, 0, 0, "alpha.1", "build..123"}));
+static_assert(!is_valid(constant_version{1, 0, 0, std::nullopt, "awesome-build!"}));
+static_assert(!is_valid(constant_version{1, 0, 0, std::nullopt, "+build.123"}));
 
 /**
  * @brief Convert a version to a string in the format "major.minor.patch".
