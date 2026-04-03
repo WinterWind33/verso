@@ -348,6 +348,33 @@ public:
             test_true("version6 <=> version6 == std::strong_ordering::equal",
                       (version6 <=> version6) == std::strong_ordering::equal);
         }
+
+        // Other particular scenarios
+        {
+            test_true("version{1, 0, 0, \"13\"} < version{1, 0, 0, \"001alpha\"}",
+                      version_test_type{1, 0, 0, "13"} < version_test_type{1, 0, 0, "001alpha"});
+        }
+
+        // From specification examples:
+        // 1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.beta < 1.0.0-beta < 1.0.0-beta.2
+        // < 1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0
+        {
+            test_true("1.0.0-alpha < 1.0.0-alpha.1",
+                      version_test_type{1, 0, 0, "alpha"} < version_test_type{1, 0, 0, "alpha.1"});
+            test_true(
+                "1.0.0-alpha.1 < 1.0.0-alpha.beta",
+                version_test_type{1, 0, 0, "alpha.1"} < version_test_type{1, 0, 0, "alpha.beta"});
+            test_true("1.0.0-alpha.beta < 1.0.0-beta", version_test_type{1, 0, 0, "alpha.beta"} <
+                                                           version_test_type{1, 0, 0, "beta"});
+            test_true("1.0.0-beta < 1.0.0-beta.2",
+                      version_test_type{1, 0, 0, "beta"} < version_test_type{1, 0, 0, "beta.2"});
+            test_true("1.0.0-beta.2 < 1.0.0-beta.11",
+                      version_test_type{1, 0, 0, "beta.2"} < version_test_type{1, 0, 0, "beta.11"});
+            test_true("1.0.0-beta.11 < 1.0.0-rc.1",
+                      version_test_type{1, 0, 0, "beta.11"} < version_test_type{1, 0, 0, "rc.1"});
+            test_true("1.0.0-rc.1 < 1.0.0",
+                      version_test_type{1, 0, 0, "rc.1"} < version_test_type{1, 0, 0});
+        }
     }
 };
 

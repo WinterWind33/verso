@@ -22,6 +22,19 @@ static_assert(details::is_number("01"));
 static_assert(details::is_number("00000001"));
 static_assert(!details::is_number(""));
 
+static_assert(details::trim_leading_zeros("0") == "0");
+static_assert(details::trim_leading_zeros("0000000000") == "0");
+static_assert(details::trim_leading_zeros("00000001") == "1");
+static_assert(details::trim_leading_zeros("000000001234567890") == "1234567890");
+static_assert(details::trim_leading_zeros("1234567890") == "1234567890");
+
+static_assert(details::is_number_str_numerically_lower_than("1", "2"));
+static_assert(details::is_number_str_numerically_lower_than("1", "10"));
+static_assert(details::is_number_str_numerically_lower_than("001", "002"));
+static_assert(!details::is_number_str_numerically_lower_than("2", "1"));
+static_assert(!details::is_number_str_numerically_lower_than("10", "1"));
+static_assert(!details::is_number_str_numerically_lower_than("001", "0001"));
+
 static_assert(details::is_numeric_identifier<std::string_view>("0"));
 static_assert(details::is_numeric_identifier<std::string_view>("1234567890"));
 static_assert(!details::is_numeric_identifier<std::string_view>(""));
@@ -69,7 +82,14 @@ static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha"
 static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.2"));
 static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.beta"));
 static_assert(details::is_prelease_strictly_lower_than<std::string_view>("13", "alpha"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("13", "001alpha"));
 static_assert(details::is_prelease_strictly_lower_than<std::string_view>("13", "45"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("beta.rc.1",
+                                                                         "beta.rc.3A"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha.beta", "beta"));
+static_assert(!details::is_prelease_strictly_lower_than<std::string_view>("001alpha", "42"));
+static_assert(!details::is_prelease_strictly_lower_than<std::string_view>("alpha.beta.54",
+                                                                          "alpha.beta.54"));
 
 static_assert(details::is_valid_char_for_version_string('a'));
 static_assert(details::is_valid_char_for_version_string('Z'));

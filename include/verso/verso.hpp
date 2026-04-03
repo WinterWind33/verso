@@ -233,6 +233,56 @@ constexpr bool is_number(const SupportedString auto& str) noexcept {
 }
 
 /**
+ * @brief Trim leading zeros from a string representing a number. If the string is composed of only
+ * zeros, it returns "0".
+ *
+ * @param str The string to trim.
+ * @return std::string_view The trimmed string view
+ */
+constexpr std::string_view trim_leading_zeros(const SupportedString auto& str) noexcept {
+    const std::string_view strView{str};
+    if (strView.empty()) {
+        // Return the empty string as is.
+        return strView;
+    }
+    const auto firstNonZeroIt = std::find_if_not(strView.begin(), strView.end(), [](const char c) {
+        return c == '0';
+    });
+    if (firstNonZeroIt == strView.end()) {
+        // If the string is composed of only zeros, we should return zero.
+        return "0";
+    }
+    return std::string_view{firstNonZeroIt, strView.end()};
+}
+
+/**
+ * @brief Compares two string representing numbers without converting them to integers, to avoid
+ * issues with leading zeros and integer overflow.
+ *
+ * @param numberStr1 The first number string.
+ * @param numberStr2 The second number string.
+ * @return true if numberStr1 is numerically lower than numberStr2, false otherwise.
+ */
+constexpr bool is_number_str_numerically_lower_than(
+    const SupportedString auto& numberStr1, const SupportedString auto& numberStr2) noexcept {
+    const std::string_view numberStrView1{trim_leading_zeros(numberStr1)};
+    const std::string_view numberStrView2{trim_leading_zeros(numberStr2)};
+
+    if (!is_number(numberStrView1) || !is_number(numberStrView2)) {
+        return false;
+    }
+
+    // We cannot just compare the strings lexicographically, because "10" would be considered lower
+    // than "2". So we need to compare the lengths of the strings first, and if they are equal, we
+    // can compare them lexicographically.
+    if (numberStrView1.size() != numberStrView2.size()) {
+        return numberStrView1.size() < numberStrView2.size();
+    }
+
+    return numberStrView1 < numberStrView2;
+}
+
+/**
  * @brief Check if an identifier is numeric.
  *
  * @param identifier The identifier string.
@@ -621,8 +671,10 @@ constexpr constant_version verso_version{0, 3, 0, "dev"};
 // All the following operators strictly follow the specification.
 
 namespace details {
-constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
-                                               const PrereleaseString auto& rhs) {
+constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhsStr,
+                                               const PrereleaseString auto& rhsStr) noexcept {
+    const std::string_view lhs{lhsStr};
+    const std::string_view rhs{rhsStr};
     // Precedence for two pre-release versions with the same major, minor, and patch version MUST be
     // determined by comparing each dot separated identifier from left to right until a difference
     // is found as follows:
@@ -634,12 +686,12 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
     // Reference: https://semver.org/#spec-item-11
     auto parts1 =
         lhs | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
-            return std::string_view{part.data(), part.size()};
+            return std::string_view{std::ranges::data(part), std::ranges::size(part)};
         });
 
     auto parts2 =
         rhs | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
-            return std::string_view{part.data(), part.size()};
+            return std::string_view{std::ranges::data(part), std::ranges::size(part)};
         });
 
     auto it1 = std::ranges::begin(parts1);
@@ -647,17 +699,21 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
     for (; it1 != std::ranges::end(parts1) && it2 != std::ranges::end(parts2); ++it1, ++it2) {
         const std::string_view identifier1{*it1};
         const std::string_view identifier2{*it2};
+        const bool isIdentifier1Numeric{is_numeric_identifier(identifier1)};
+        const bool isIdentifier2Numeric{is_numeric_identifier(identifier2)};
 
-        if (is_numeric_identifier<std::string_view>(identifier1) &&
-            is_numeric_identifier<std::string_view>(identifier2)) {
+        if (isIdentifier1Numeric && isIdentifier2Numeric) {
             // As per specification 11.4.1, numeric identifiers are compared numerically.
-            const std::uint64_t num1{std::stoull(std::string(identifier1))};
-            const std::uint64_t num2{std::stoull(std::string(identifier2))};
+
             // We can't return directly, because if numbers are equal, we need to continue to the
             // next identifier.
-            if (num1 != num2) {
-                return num1 < num2;
+            if (identifier1 != identifier2) {
+                return is_number_str_numerically_lower_than(identifier1, identifier2);
             }
+        } else if (isIdentifier1Numeric || isIdentifier2Numeric) {
+            // As per specification 11.4.3, numeric identifiers always have lower precedence than
+            // non-numeric identifiers.
+            return isIdentifier1Numeric; // If identifier1 is numeric, it has lower precedence.
         } else {
             // We can't just compare with operator < directly because if the identifiers are equal,
             // we need to continue to the next identifier.
