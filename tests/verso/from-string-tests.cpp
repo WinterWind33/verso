@@ -39,10 +39,8 @@ public:
                             version{1, 0, 0, "beta", "exp.sha.5114f85"});
         test_valid_scenario("1.0.0+21AF26D3----117B344092BD",
                             version{1, 0, 0, std::nullopt, "21AF26D3----117B344092BD"});
-        // Unfortunately, there is no way to distinguish between pre-release and build metadata if
-        // the build metadata comes before the pre-release data, which is not compliant with the
-        // specification, but we can still parse it as a valid version with build metadata and no
-        // pre-release data.
+        // Everything after the first '+' character is considered build metadata, even if it
+        // contains a '-' character, which is valid according to the specification.
         test_valid_scenario("1.0.0+metadatabefore-prerelease",
                             version{1, 0, 0, std::nullopt, "metadatabefore-prerelease"});
 

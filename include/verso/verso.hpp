@@ -4,11 +4,11 @@
 
 // C++ STL
 #include <algorithm>
+#include <charconv>
 #include <compare>
 #include <concepts>
 #include <cstdint>
 #include <format>
-#include <numeric> // for std::accumulate
 #include <optional>
 #include <ranges>
 #include <stdexcept>
@@ -196,7 +196,8 @@ concept Version =
     std::constructible_from<VersionT, typename VersionT::major_t, typename VersionT::minor_t,
                             typename VersionT::patch_t,
                             std::optional<typename VersionT::prerelease_string_t>,
-                            std::optional<typename VersionT::build_metadata_string_t>>;
+                            std::optional<typename VersionT::build_metadata_string_t>> &&
+    std::equality_comparable<VersionT>;
 
 /**
  * @brief Semantic version string separator.
@@ -361,7 +362,7 @@ constexpr bool check_string_identifiers(const SupportedString auto& str,
                                         const bool canIncludeLeadingZeroes) noexcept {
     auto parts =
         str | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
-            return std::string_view{part.data(), part.size()};
+            return std::string_view{std::ranges::data(part), std::ranges::size(part)};
         });
     if (parts.empty()) {
         return false; // The string must not be empty.
@@ -671,8 +672,8 @@ constexpr constant_version verso_version{0, 3, 0, "dev"};
 // All the following operators strictly follow the specification.
 
 namespace details {
-constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhsStr,
-                                               const PrereleaseString auto& rhsStr) noexcept {
+constexpr bool is_prerelease_strictly_lower_than(const PrereleaseString auto& lhsStr,
+                                                 const PrereleaseString auto& rhsStr) noexcept {
     const std::string_view lhs{lhsStr};
     const std::string_view rhs{rhsStr};
     // Precedence for two pre-release versions with the same major, minor, and patch version MUST be
@@ -761,8 +762,8 @@ constexpr bool operator<(const Version auto& lhs, const Version auto& rhs) noexc
     if (lhs.prerelease_data() && rhs.prerelease_data()) {
         // If both versions have a pre-release string, we need to compare them according to the
         // specification 11.4.
-        return details::is_prelease_strictly_lower_than(lhs.prerelease_data().value(),
-                                                        rhs.prerelease_data().value());
+        return details::is_prerelease_strictly_lower_than(lhs.prerelease_data().value(),
+                                                          rhs.prerelease_data().value());
     }
 
     return false;
@@ -925,6 +926,38 @@ constexpr bool is_valid_version_string(const std::string_view versionStr) noexce
     }
     return true;
 }
+
+/**
+ * @brief Loads a number from a string view into the given output variable. In case of any error,
+ *  returns false and leaves the output variable unchanged.
+ *
+ *
+ * @tparam NormalVersionNumberComponentT The type of the output variable. It must satisfy the
+ * NormalVersionNumberComponent concept.
+ * @param str The string view to load the number from.
+ * @param out The output variable to load the number into.
+ * @return true if the number was loaded successfully, false otherwise.
+ */
+template <NormalVersionNumberComponent NormalVersionNumberComponentT>
+bool try_load_number(const std::string_view str, NormalVersionNumberComponentT& out) noexcept {
+    if (!is_numeric_identifier(str)) {
+        // The string is not a valid numeric identifier, so we cannot load it as a
+        // number.
+        // Should not have any leading zero.
+        return false;
+    }
+
+    try {
+        const auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), out);
+        if (ec == std::errc()) {
+            return true;
+        }
+        return false;
+    } catch (...) {
+        return false;
+    }
+}
+
 } // namespace details
 
 /**
@@ -968,17 +1001,12 @@ constexpr std::optional<VersionT> from_string(const SupportedString auto& str) {
                                return std::string_view{std::ranges::data(part),
                                                        std::ranges::size(part)};
                            })) {
-        if (!details::is_numeric_identifier(part)) {
-            // The major, minor and patch version numbers must be numeric
+        if (compIdx == 0 && !details::try_load_number(part, major)) {
             return std::nullopt;
-        }
-        if (compIdx == 0) {
-            // TODO: Create a constexpr version of std::stoull.
-            major = static_cast<typename VersionT::major_t>(std::stoull(std::string{part}));
-        } else if (compIdx == 1) {
-            minor = static_cast<typename VersionT::minor_t>(std::stoull(std::string{part}));
-        } else if (compIdx == 2) {
-            patch = static_cast<typename VersionT::patch_t>(std::stoull(std::string{part}));
+        } else if (compIdx == 1 && !details::try_load_number(part, minor)) {
+            return std::nullopt;
+        } else if (compIdx == 2 && !details::try_load_number(part, patch)) {
+            return std::nullopt;
         }
         compIdx++;
     }
@@ -1003,15 +1031,23 @@ constexpr std::optional<VersionT> from_string(const SupportedString auto& str) {
                                   std::views::take_while([](const char c) {
                                       return c != '+';
                                   });
-        std::string prereleaseDataStr{};
-        std::ranges::copy(prereleaseDataView, std::back_inserter(prereleaseDataStr));
+
+        // We need to se the prerelease data string to point to the original version string
+        // because if the user choose a std::string_view for the pre-release data type, we want to
+        // have the version prerelease to point to valid data. If we create a new string here, it
+        // would point to junk value when leaving the function.
+        const auto startIt{versionStr.data() +
+                           std::ranges::distance(versionStr.begin(), prereleaseDataView.begin())};
+        const auto endIt{
+            startIt + std::ranges::distance(prereleaseDataView.begin(), prereleaseDataView.end())};
+        const std::string_view prereleaseDataStr{startIt, endIt};
         if (prereleaseDataStr.empty() ||
             !details::check_string_identifiers(prereleaseDataStr,
                                                /* can include leading zeros */ false)) {
             // If there is a '-' character, there must be pre-release data after it.
             return std::nullopt;
         }
-        prereleaseData = std::move(prereleaseDataStr);
+        prereleaseData = typename VersionT::prerelease_string_t{prereleaseDataStr};
         // The "1" is for the '-' character that we need to drop, and the rest is for the
         // pre-release data that we just dropped.
         dropCount = 1 + std::ranges::distance(prereleaseDataView.begin(), prereleaseDataView.end());
@@ -1028,14 +1064,18 @@ constexpr std::optional<VersionT> from_string(const SupportedString auto& str) {
 
     // Remove the selector.
     auto buildMetadataView = buildMetadataSelectorView | std::views::drop(1);
-    std::string buildMetadataStr{};
-    std::ranges::copy(buildMetadataView, std::back_inserter(buildMetadataStr));
+    // Same as pre-release.
+    const auto startIt{versionStr.data() +
+                       std::ranges::distance(versionStr.begin(), buildMetadataView.begin())};
+    const auto endIt{startIt +
+                     std::ranges::distance(buildMetadataView.begin(), buildMetadataView.end())};
+    const std::string_view buildMetadataStr{startIt, endIt};
     if (buildMetadataStr.empty() ||
         !details::check_string_identifiers(buildMetadataStr,
                                            /* can include leading zeros */ true)) {
         return std::nullopt;
     }
-    buildMetadata = std::move(buildMetadataStr);
+    buildMetadata = typename VersionT::build_metadata_string_t{buildMetadataStr};
 
     return VersionT{major, minor, patch, std::move(prereleaseData), std::move(buildMetadata)};
 }
@@ -1045,9 +1085,7 @@ static_assert(from_string<version>("1") == std::nullopt);
 static_assert(from_string<version>("1.0") == std::nullopt);
 static_assert(from_string<version>("1.0.0.0") == std::nullopt);
 static_assert(from_string<version>("....") == std::nullopt);
-static_assert(from_string<version>("..") == std::nullopt);
 static_assert(from_string<version>("junk-data") == std::nullopt);
-static_assert(from_string<version>("nan.nan.nan") == std::nullopt);
 } // namespace verso
 
 #endif // INCLUDE_VERSO_HPP

@@ -237,6 +237,8 @@ In particular, your version class must have the following member functions:
   - `Version(major_t major, minor_t minor, patch_t patch, std::optional<prerelease_string_t> prerelease_data)`
   - `Version(major_t major, minor_t minor, patch_t patch, std::optional<prerelease_string_t> prerelease_data, std::optional<build_metadata_string_t> build_metadata)`
 
+- Your class must be equality comparable
+
 This way, your custom version class/struct can be used with all the functions provided by the library, including `to_string` and `from_string`:
 
 ```cpp
@@ -271,6 +273,9 @@ public:
 
     std::optional<prerelease_string_t> prerelease_data() const { return prerelease_data_; }
     std::optional<build_metadata_string_t> build_metadata() const { return build_metadata_; }
+
+    bool operator==(const my_version& other) const = default;
+
 private:
     major_t major_{0};
     minor_t minor_{0};
@@ -287,3 +292,5 @@ void test_custom_version() {
     const std::optional<my_version> parsed_ver = verso::from_string<my_version>(ver_str); // parsed_ver has value 1.0.0-alpha+exp.sha.5114f85
 }
 ```
+
+Of course, you should be careful when defining your own version class, as the library functions expect the class to behave in a certain way: for example, most of the library functions do not throw and are marked `noexcept`, so if your class throws exceptions in its member functions, you might get unexpected behavior when using it with the library functions.
