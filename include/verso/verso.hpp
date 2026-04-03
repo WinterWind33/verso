@@ -898,16 +898,13 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
     // Build metadata.
     // We need to drop the pre-release data (which contains the '-' in the dropCount) and the build
     // metadata selector (which is the '+' character).
-    // Check if there is a '+' character, which indicates the start of the build metadata. If there
-    // is no '+' character, it means that there is no build metadata, so we can return the version
-    // now.
     auto buildMetadataSelectorView = prereleaseAndBuildMetadataView | std::views::drop(dropCount);
-    std::string debugStr{};
-    std::ranges::copy(buildMetadataSelectorView, std::back_inserter(debugStr));
     if (buildMetadataSelectorView.empty()) {
+        // In this case there is no more data to parse, so we can return the version now.
         return VersionT{major, minor, patch, std::move(prereleaseData)};
     }
 
+    // Remove the selector.
     auto buildMetadataView = buildMetadataSelectorView | std::views::drop(1);
     std::string buildMetadataStr{};
     std::ranges::copy(buildMetadataView, std::back_inserter(buildMetadataStr));
