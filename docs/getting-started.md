@@ -109,7 +109,7 @@ If you want to be sure your code is evaluated at compile time, use static assert
 constexpr verso::constant_version ver{1, 0, 0, "alpha", "exp.sha.5114f85"};
 ```
 
-If you create a constant version wit junk data, the compiler will throw a compilation error:
+If you create a constant version with junk data, the compiler will throw a compilation error:
 
 ```cpp
 #include <verso/verso.hpp>

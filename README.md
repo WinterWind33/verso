@@ -75,9 +75,9 @@ Parsing versions from strings:
 std::optional<verso::version> parsed_ver = verso::from_string<verso::version>("1.43.5");
 assert(parsed_ver.has_value());
 
-const auto major = parsed_ver->major; // 1
-const auto minor = parsed_ver->minor; // 43
-const auto patch = parsed_ver->patch; // 5
+const auto major = parsed_ver->major(); // 1
+const auto minor = parsed_ver->minor(); // 43
+const auto patch = parsed_ver->patch(); // 5
 ```
 
 Comparing versions:

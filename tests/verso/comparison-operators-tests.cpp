@@ -180,7 +180,7 @@ public:
             test_false("version2 > version1", version2 > version1);
             test_false("version2 > version3", version2 > version3);
             // Pre-release identifiers consisting of only digits have lower precedence than those
-            // with letters, so "alpha" < "45" (Specification 11.4.3)
+            // with letters, so "alpha" > "45" (Specification 11.4.3)
             test_true("version2 > version4", version2 > version4);
             test_true("version2 > version5", version2 > version5);
 
