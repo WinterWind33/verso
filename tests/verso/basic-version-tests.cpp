@@ -16,18 +16,18 @@ public:
         // Default construction
         {
             const version_test_type version{};
-            test_equal("Default construction - major number", version.major, std::uint8_t{});
-            test_equal("Default construction - minor number", version.minor, std::uint16_t{});
-            test_equal("Default construction - patch number", version.patch, 0u);
+            test_equal("Default construction - major number", version.major(), std::uint8_t{});
+            test_equal("Default construction - minor number", version.minor(), std::uint16_t{});
+            test_equal("Default construction - patch number", version.patch(), 0u);
         }
         // Construction with parameters
         {
             const version_test_type version{1, 2, 3};
-            test_equal("Construction with parameters - major number", version.major,
+            test_equal("Construction with parameters - major number", version.major(),
                        std::uint8_t{1});
-            test_equal("Construction with parameters - minor number", version.minor,
+            test_equal("Construction with parameters - minor number", version.minor(),
                        std::uint16_t{2});
-            test_equal("Construction with parameters - patch number", version.patch, 3u);
+            test_equal("Construction with parameters - patch number", version.patch(), 3u);
         }
         // Equality operator (on core version data)
         {

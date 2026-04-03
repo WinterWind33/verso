@@ -203,6 +203,13 @@ public:
         }
     }
 
+    /**
+     * @brief Asserts that the given function throws an exception when called.
+     *
+     * @param what The description of the test.
+     * @param func The function to test.
+     * @return true if the function throws an exception, false otherwise.
+     */
     bool test_should_throw(const std::string_view what, const std::function<void()>& func);
 
 protected:

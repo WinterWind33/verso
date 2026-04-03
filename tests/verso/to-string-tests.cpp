@@ -74,36 +74,6 @@ public:
             test_equal("to_string(version{1, 2, 3, \"alpha\", \"build.000005\"})",
                        std::string{"1.2.3-alpha+build.000005"}, to_string(ver));
         }
-        {
-            const version brokenVersion{1, 2, 3, "0054"};
-            test_should_throw("to_string(version{1, 2, 3, \"0054\"}) should throw an exception",
-                              [&brokenVersion] {
-                                  to_string(brokenVersion);
-                              });
-        }
-        {
-            const version brokenVersion{1, 2, 3, "alpha.01"};
-            test_should_throw("to_string(version{1, 2, 3, \"alpha.01\"}) should throw an exception",
-                              [&brokenVersion] {
-                                  to_string(brokenVersion);
-                              });
-        }
-        {
-            const version brokenVersion{1, 2, 3, ""};
-            test_should_throw("to_string(version{1, 2, 3, \"\"}) should throw an exception",
-                              [&brokenVersion] {
-                                  to_string(brokenVersion);
-                              });
-        }
-        {
-            const version brokenVersion{1, 2, 3, "alpha", "awesome.build!"};
-            test_should_throw(
-                "to_string(version{1, 2, 3, \"alpha\", \"awesome.build!\"}) should throw an "
-                "exception",
-                [&brokenVersion] {
-                    to_string(brokenVersion);
-                });
-        }
     }
 };
 
