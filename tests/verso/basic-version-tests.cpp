@@ -176,8 +176,8 @@ private:
             std::format(
                 "Construction with parameters should not throw with valid parameters - major: {}, "
                 "minor: {}, patch: {}, prerelease_data: {}, build_metadata: {}",
-                major, minor, patch, prerelease_data ? prerelease_data.value() : "null",
-                build_metadata ? build_metadata.value() : "null"),
+                major, minor, patch, prerelease_data.value_or("null"),
+                build_metadata.value_or("null")),
             [&]() {
                 return version_test_type{major, minor, patch, prerelease_data, build_metadata};
             },
@@ -193,8 +193,8 @@ private:
             std::format(
                 "Construction with parameters should throw with invalid parameters - major: {}, "
                 "minor: {}, patch: {}, prerelease_data: {}, build_metadata: {}",
-                major, minor, patch, prerelease_data ? prerelease_data.value() : "null",
-                build_metadata ? build_metadata.value() : "null"),
+                major, minor, patch, prerelease_data.value_or("null"),
+                build_metadata.value_or("null")),
             [&]() {
                 return version_test_type{major, minor, patch, prerelease_data, build_metadata};
             });
