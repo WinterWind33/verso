@@ -338,11 +338,25 @@ public:
         m_patch = patch;
     }
 
-    constexpr void prerelease_data(std::optional<prerelease_string_t> prerelease_data) noexcept {
+    constexpr void prerelease_data(std::optional<prerelease_string_t> prerelease_data) {
+        if (prerelease_data &&
+            !details::check_string_identifiers(prerelease_data.value(),
+                                               /* can include leading zeros */ false)) {
+            throw std::invalid_argument(
+                "Invalid pre-release data format. Please, check pre-release data format according "
+                "to the specification.");
+        }
         m_prerelease_data = std::move(prerelease_data);
     }
 
-    constexpr void build_metadata(std::optional<build_metadata_string_t> build_metadata) noexcept {
+    constexpr void build_metadata(std::optional<build_metadata_string_t> build_metadata) {
+        if (build_metadata &&
+            !details::check_string_identifiers(build_metadata.value(),
+                                               /* can include leading zeros */ true)) {
+            throw std::invalid_argument(
+                "Invalid build metadata format. Please, check build metadata format according "
+                "to the specification.");
+        }
         m_build_metadata = std::move(build_metadata);
     }
 
