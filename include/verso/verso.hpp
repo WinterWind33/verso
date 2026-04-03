@@ -161,6 +161,7 @@ using default_version_traits =
  */
 template <typename VersionT>
 concept Version =
+    std::default_initializable<VersionT> &&
     requires {
         typename VersionT::major_t;
         typename VersionT::minor_t;
@@ -187,16 +188,15 @@ concept Version =
     } &&
     // A version supported by verso should be constructible with all the sem ver components, in
     // various ways.
-    requires(typename VersionT::major_t major, typename VersionT::minor_t minor,
-             typename VersionT::patch_t patch,
-             std::optional<typename VersionT::prerelease_string_t> prerelease_data,
-             std::optional<typename VersionT::build_metadata_string_t> build_metadata) {
-        { VersionT{major, minor, patch} } -> std::same_as<VersionT>;
-        { VersionT{major, minor, patch, prerelease_data} } -> std::same_as<VersionT>;
-        {
-            VersionT{major, minor, patch, prerelease_data, build_metadata}
-        } -> std::same_as<VersionT>;
-    };
+    std::constructible_from<VersionT, typename VersionT::major_t, typename VersionT::minor_t,
+                            typename VersionT::patch_t> &&
+    std::constructible_from<VersionT, typename VersionT::major_t, typename VersionT::minor_t,
+                            typename VersionT::patch_t,
+                            std::optional<typename VersionT::prerelease_string_t>> &&
+    std::constructible_from<VersionT, typename VersionT::major_t, typename VersionT::minor_t,
+                            typename VersionT::patch_t,
+                            std::optional<typename VersionT::prerelease_string_t>,
+                            std::optional<typename VersionT::build_metadata_string_t>>;
 
 /**
  * @brief Semantic version string separator.
