@@ -15,7 +15,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <vector>
 
 namespace verso {
 
@@ -43,6 +42,13 @@ static_assert(NormalVersionNumberComponent<std::uint64_t>);
  */
 using default_normal_version_number_component = std::uint32_t;
 
+/**
+ * @brief Concept for a supported string type in this library. Supported string types are those that
+ * can be used for pre-release and build metadata strings, and they MUST be convertible to
+ * std::string_view.
+ *
+ * @tparam SupportedStringType The type to check.
+ */
 template <typename SupportedStringType>
 concept SupportedString = std::convertible_to<SupportedStringType, std::string_view>;
 
@@ -81,8 +87,8 @@ static_assert(BuildMetadataString<std::string>);
 
 /**
  * @brief Concept for version traits. Version traits MUST define the types used for the major, minor
- * and patch version numbers, and these types MUST satisfy the NormalVersionNumberComponent concept.
- * It also defines the types used for pre-release and build metadata strings.
+ * and patch numbers, along with pre-release and build metadata strings, and these types MUST
+ * satisfy their respective concepts.
  *
  * @tparam TraitsT The traits type to check.
  */
@@ -149,12 +155,6 @@ constexpr bool is_valid_version_number_digit(const char c) noexcept {
     return c >= '0' && c <= '9';
 }
 
-static_assert(is_valid_version_number_digit('0'));
-static_assert(is_valid_version_number_digit('9'));
-static_assert(!is_valid_version_number_digit('a'));
-static_assert(!is_valid_version_number_digit(' '));
-static_assert(!is_valid_version_number_digit('-'));
-
 /**
  * @brief Check if an identifier is numeric.
  *
@@ -183,24 +183,29 @@ constexpr bool is_numeric_identifier(const SupportedString auto& identifier) {
     }
     return true;
 }
-static_assert(is_numeric_identifier<std::string_view>("0"));
-static_assert(is_numeric_identifier<std::string_view>("1234567890"));
-static_assert(!is_numeric_identifier<std::string_view>(""));
-static_assert(!is_numeric_identifier<std::string_view>("a123"));
-static_assert(!is_numeric_identifier<std::string_view>("-23"));
 
+/**
+ * @brief Check if a character is an alphanumeric character or a hyphen, which are the only valid
+ * characters for identifiers in pre-release and build metadata strings, according to the
+ * specification https://semver.org/#spec-item-9 and https://semver.org/#spec-item-10.
+ *
+ * @param c The character to check.
+ * @return true if the character is an alphanumeric character or a hyphen, false otherwise.
+ */
 constexpr bool is_alnum_or_hyphen(const char c) noexcept {
     return c == '-' || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
-static_assert(is_alnum_or_hyphen('a'));
-static_assert(is_alnum_or_hyphen('Z'));
-static_assert(is_alnum_or_hyphen('0'));
-static_assert(is_alnum_or_hyphen('-'));
-static_assert(!is_alnum_or_hyphen(' '));
-static_assert(!is_alnum_or_hyphen('!'));
-static_assert(!is_alnum_or_hyphen(VERSION_STRING_SEPARATOR));
+/**
+ * @brief Check if an identifier is valid according to the specification
+ * https://semver.org/#spec-item-9 and https://semver.org/#spec-item-10. An identifier is valid if
+ * it is a non-empty string of alphanumeric characters and hyphens.
+ *
+ * @param id The identifier string.
+ * @param canIncludeLeadingZeroes Whether leading zeroes are allowed for numeric identifiers.
+ * @return true if the identifier is valid, false otherwise.
 
+ */
 constexpr bool is_identifier_valid(const SupportedString auto& id,
                                    const bool canIncludeLeadingZeroes) noexcept {
     if (id.empty()) {
@@ -219,21 +224,13 @@ constexpr bool is_identifier_valid(const SupportedString auto& id,
     return true;
 }
 
-static_assert(is_identifier_valid<std::string_view>("0", false));
-static_assert(is_identifier_valid<std::string_view>("alpha", false));
-static_assert(is_identifier_valid<std::string_view>("alpha", false));
-static_assert(is_identifier_valid<std::string_view>("alpha-1", false));
-static_assert(!is_identifier_valid<std::string_view>("", false));
-static_assert(!is_identifier_valid<std::string_view>("01", false));
-static_assert(!is_identifier_valid<std::string_view>("00000001", false));
-static_assert(!is_identifier_valid<std::string_view>("+1", false));
-static_assert(!is_identifier_valid<std::string_view>("1gfd!.", false));
-static_assert(is_identifier_valid<std::string_view>("alpha", true));
-static_assert(is_identifier_valid<std::string_view>("alpha-1", true));
-static_assert(is_identifier_valid<std::string_view>("01", true));
-static_assert(is_identifier_valid<std::string_view>("00000001", true));
-static_assert(!is_identifier_valid<std::string_view>("", false));
-
+/**
+ * @brief Check if a string of dot-separated identifiers is valid according to the specification.
+ *
+ * @param str The string to check.
+ * @param canIncludeLeadingZeroes Whether leading zeroes are allowed for numeric identifiers.
+ * @return true if the string is valid, false otherwise.
+ */
 constexpr bool check_string_identifiers(const SupportedString auto& str,
                                         const bool canIncludeLeadingZeroes) noexcept {
     auto parts =
@@ -252,173 +249,7 @@ constexpr bool check_string_identifiers(const SupportedString auto& str,
     return true;
 }
 
-static_assert(check_string_identifiers<std::string_view>("alpha.1", false));
-static_assert(check_string_identifiers<std::string_view>("beta-54", false));
-static_assert(check_string_identifiers<std::string_view>("01.0.0", true));
-static_assert(!check_string_identifiers<std::string_view>("", false));
-static_assert(!check_string_identifiers<std::string_view>("alpha..1", false));
-static_assert(!check_string_identifiers<std::string_view>("alpha.01", false));
-static_assert(!check_string_identifiers<std::string_view>("alpha.", false));
-static_assert(!check_string_identifiers<std::string_view>(".alpha", false));
-
 } // namespace details
-
-/**
- * @brief Main version class, parametrized by the version traits.
- *
- * @tparam TraitsT The version traits type. It MUST satisfy the VersionTraits concept.
- */
-template <typename TraitsT>
-    requires VersionTraits<TraitsT>
-class basic_version {
-public:
-    using traits_t = std::decay_t<TraitsT>;
-    using major_t = typename traits_t::major_t;
-    using minor_t = typename traits_t::minor_t;
-    using patch_t = typename traits_t::patch_t;
-    using prerelease_string_t = typename traits_t::prerelease_string_t;
-    using build_metadata_string_t = typename traits_t::build_metadata_string_t;
-
-    constexpr basic_version() noexcept = default;
-    constexpr basic_version(
-        const major_t major, const minor_t minor, const patch_t patch,
-        const std::optional<prerelease_string_t> prerelease_data = std::nullopt,
-        const std::optional<build_metadata_string_t> build_metadata = std::nullopt)
-        : m_major{major},
-          m_minor{minor},
-          m_patch{patch},
-          m_prerelease_data{prerelease_data},
-          m_build_metadata{build_metadata} {
-        if (!is_valid()) {
-            throw std::invalid_argument(
-                "Invalid version format. Please, check pre-release and build metadata format "
-                "according "
-                "to the specification.");
-        }
-    }
-
-    constexpr major_t major() const noexcept {
-        return m_major;
-    }
-
-    constexpr minor_t minor() const noexcept {
-        return m_minor;
-    }
-
-    constexpr patch_t patch() const noexcept {
-        return m_patch;
-    }
-
-    constexpr std::optional<prerelease_string_t> prerelease_data() const noexcept {
-        return m_prerelease_data;
-    }
-
-    constexpr std::optional<build_metadata_string_t> build_metadata() const noexcept {
-        return m_build_metadata;
-    }
-
-    /**
-     * @brief Equality operator. Two versions are considered equal if their major, minor, patch and
-     * pre-release data are equal. Build metadata is ignored for equality and precedence purposes,
-     * as per specification https://semver.org/#spec-item-10.
-     *
-     * @param other The other version to compare with.
-     * @return true if the versions are equal, false otherwise.
-     */
-    constexpr bool operator==(const basic_version& other) const noexcept {
-        return m_major == other.m_major && m_minor == other.m_minor && m_patch == other.m_patch &&
-               m_prerelease_data == other.m_prerelease_data;
-    }
-
-    constexpr void major(const major_t major) noexcept {
-        m_major = major;
-    }
-
-    constexpr void minor(const minor_t minor) noexcept {
-        m_minor = minor;
-    }
-
-    constexpr void patch(const patch_t patch) noexcept {
-        m_patch = patch;
-    }
-
-    constexpr void prerelease_data(std::optional<prerelease_string_t> prerelease_data) {
-        if (prerelease_data &&
-            !details::check_string_identifiers(prerelease_data.value(),
-                                               /* can include leading zeros */ false)) {
-            throw std::invalid_argument(
-                "Invalid pre-release data format. Please, check pre-release data format according "
-                "to the specification.");
-        }
-        m_prerelease_data = std::move(prerelease_data);
-    }
-
-    constexpr void build_metadata(std::optional<build_metadata_string_t> build_metadata) {
-        if (build_metadata &&
-            !details::check_string_identifiers(build_metadata.value(),
-                                               /* can include leading zeros */ true)) {
-            throw std::invalid_argument(
-                "Invalid build metadata format. Please, check build metadata format according "
-                "to the specification.");
-        }
-        m_build_metadata = std::move(build_metadata);
-    }
-
-private:
-    /**
-     * @brief Major version number.
-     */
-    major_t m_major{};
-
-    /**
-     * @brief Minor version number.
-     */
-    minor_t m_minor{};
-
-    /**
-     * @brief Patch version number.
-     */
-    patch_t m_patch{};
-
-    /**
-     * @brief Pre-release string. This is an optional field that can be used to indicate that a
-     * version is a pre-release version. If this field is not empty, the version is considered a
-     * pre-release version and has lower precedence than the same version without the pre-release
-     * string.
-     */
-    std::optional<prerelease_string_t> m_prerelease_data{};
-
-    /**
-     * @brief Build metadata string. This is an optional field that can be used to indicate
-     * additional build information. If this field is not empty, it does not affect the version
-     * precedence.
-     */
-    std::optional<build_metadata_string_t> m_build_metadata{};
-
-    constexpr bool is_valid() const noexcept {
-        // A version is valid if its major, minor and patch version numbers are valid, and if its
-        // pre-release data and build metadata are valid according to the specification.
-
-        // Check if pre-release data is valid. It must consist of dot-separated identifiers, where
-        // each identifier is either a non-empty string of alphanumeric characters and hyphens, or a
-        // numeric identifier.
-        if (m_prerelease_data &&
-            !details::check_string_identifiers(m_prerelease_data.value(),
-                                               /* can include leading zeros */ false)) {
-            return false; // Identifiers must be valid according to the specification.
-        }
-
-        // Check if build metadata is valid. It must consist of dot-separated identifiers, where
-        // each identifier is a non-empty string of alphanumeric characters and hyphens.
-        if (m_build_metadata &&
-            !details::check_string_identifiers(m_build_metadata.value(),
-                                               /* can include leading zeros */ true)) {
-            return false; // Identifiers must be valid according to the specification.
-        }
-
-        return true;
-    }
-};
 
 /**
  * @brief Concept for a version supported by this library. A version MUST have the following
@@ -433,6 +264,8 @@ private:
  * version, of a type that satisfies the PrereleaseString concept.
  * - build_metadata: an optional field that can be used to indicate additional build information, of
  * a type that satisfies the BuildMetadataString concept.
+ * This concept enforces only getters for these members, but the actual version class can have
+ * setters as well, as long as it satisfies the requirements of this concept.
  *
  * @tparam VersionT The type to check.
  */
@@ -460,6 +293,215 @@ concept Version = requires {
 };
 
 /**
+ * @brief Main version class, parametrized by the version traits.
+ *
+ * @tparam TraitsT The version traits type. It MUST satisfy the VersionTraits concept.
+ */
+template <typename TraitsT>
+    requires VersionTraits<TraitsT>
+class basic_version {
+public:
+    using traits_t = std::decay_t<TraitsT>;
+    using major_t = typename traits_t::major_t;
+    using minor_t = typename traits_t::minor_t;
+    using patch_t = typename traits_t::patch_t;
+    using prerelease_string_t = typename traits_t::prerelease_string_t;
+    using build_metadata_string_t = typename traits_t::build_metadata_string_t;
+
+    /**
+     * @brief Constructs a zeroed version with no pre-release data and no build metadata.
+     */
+    constexpr basic_version() noexcept = default;
+
+    /**
+     * @brief Constructs a version with the given major, minor and patch version numbers, and
+     * optional pre-release data and build metadata. The version is validated according to the
+     * specification, and if it is not valid, an std::invalid_argument exception is thrown.
+     *
+     * @param major The major version number.
+     * @param minor The minor version number.
+     * @param patch The patch version number.
+     * @param prerelease_data The pre-release data string. This is an optional field that can be
+     * used to indicate that a version is a pre-release version.
+     * @param build_metadata The build metadata string. This is an optional field that can be used
+     * to indicate additional build information.
+     */
+    constexpr basic_version(
+        const major_t major, const minor_t minor, const patch_t patch,
+        const std::optional<prerelease_string_t> prerelease_data = std::nullopt,
+        const std::optional<build_metadata_string_t> build_metadata = std::nullopt)
+        : m_major{major},
+          m_minor{minor},
+          m_patch{patch},
+          m_prerelease_data{prerelease_data},
+          m_build_metadata{build_metadata} {
+        if (!is_valid()) {
+            throw std::invalid_argument(
+                "Invalid version format. Please, check pre-release and build metadata format "
+                "according "
+                "to the specification.");
+        }
+    }
+
+    /**
+     * @brief Retrieves the major version number.
+     *
+     * @return major_t The major version number.
+     */
+    constexpr major_t major() const noexcept {
+        return m_major;
+    }
+
+    /**
+     * @brief Retrieves the minor version number.
+     *
+     * @return minor_t The minor version number.
+     */
+    constexpr minor_t minor() const noexcept {
+        return m_minor;
+    }
+
+    /**
+     * @brief Retrieves the patch version number.
+     *
+     * @return patch_t The patch version number.
+     */
+    constexpr patch_t patch() const noexcept {
+        return m_patch;
+    }
+
+    /**
+     * @brief Retrieves the pre-release data string.
+     *
+     * @return std::optional<prerelease_string_t> The pre-release data string.
+     */
+    constexpr std::optional<prerelease_string_t> prerelease_data() const noexcept {
+        return m_prerelease_data;
+    }
+
+    /**
+     * @brief Retrieves the build metadata string.
+     *
+     * @return std::optional<build_metadata_string_t> The build metadata string.
+     */
+    constexpr std::optional<build_metadata_string_t> build_metadata() const noexcept {
+        return m_build_metadata;
+    }
+
+    /**
+     * @brief Equality operator. Two versions are considered equal if their major, minor, patch and
+     * pre-release data are equal. Build metadata is ignored for equality and precedence purposes,
+     * as per specification https://semver.org/#spec-item-10.
+     *
+     * @param other The other version to compare with.
+     * @return true if the versions are equal, false otherwise.
+     */
+    constexpr bool operator==(const basic_version& other) const noexcept {
+        return m_major == other.m_major && m_minor == other.m_minor && m_patch == other.m_patch &&
+               m_prerelease_data == other.m_prerelease_data;
+    }
+
+    /**
+     * @brief Sets the major version number.
+     *
+     * @param major The major version number to set.
+     */
+    constexpr void major(const major_t major) noexcept {
+        m_major = major;
+    }
+
+    /**
+     * @brief Sets the minor version number.
+     *
+     * @param minor The minor version number to set.
+     */
+    constexpr void minor(const minor_t minor) noexcept {
+        m_minor = minor;
+    }
+
+    /**
+     * @brief Sets the patch version number.
+     *
+     * @param patch The patch version number to set.
+     */
+    constexpr void patch(const patch_t patch) noexcept {
+        m_patch = patch;
+    }
+
+    /**
+     * @brief Sets the pre-release data string. The pre-release data string is validated according
+     * to the specification, and if it is not valid, an std::invalid_argument exception is thrown.
+     *
+     * Refer to https://semver.org/#spec-item-9 for the pre-release data format specification.
+     *
+     * @param prerelease_data The pre-release data string to set. This is an optional field that can
+     * be used to indicate that a version is a pre-release version.
+     */
+    constexpr void prerelease_data(std::optional<prerelease_string_t> prerelease_data) {
+        if (prerelease_data &&
+            !details::check_string_identifiers(prerelease_data.value(),
+                                               /* can include leading zeros */ false)) {
+            throw std::invalid_argument(
+                "Invalid pre-release data format. Please, check pre-release data format according "
+                "to the specification.");
+        }
+        m_prerelease_data = std::move(prerelease_data);
+    }
+
+    /**
+     * @brief Sets the build metadata string. The build metadata string is validated according to
+     * the specification, and if it is not valid, an std::invalid_argument exception is thrown.
+     *
+     * Refer to https://semver.org/#spec-item-10 for the build metadata format specification.
+     *
+     * @param build_metadata The build metadata string to set. This is an optional field that can be
+     * used to indicate additional build information.
+     */
+    constexpr void build_metadata(std::optional<build_metadata_string_t> build_metadata) {
+        if (build_metadata &&
+            !details::check_string_identifiers(build_metadata.value(),
+                                               /* can include leading zeros */ true)) {
+            throw std::invalid_argument(
+                "Invalid build metadata format. Please, check build metadata format according "
+                "to the specification.");
+        }
+        m_build_metadata = std::move(build_metadata);
+    }
+
+private:
+    major_t m_major{};
+    minor_t m_minor{};
+    patch_t m_patch{};
+    std::optional<prerelease_string_t> m_prerelease_data{};
+    std::optional<build_metadata_string_t> m_build_metadata{};
+
+    // Performs validation of the version according to the specification.
+    constexpr bool is_valid() const noexcept {
+        // A version is valid if its major, minor and patch version numbers are valid, and if its
+        // pre-release data and build metadata are valid according to the specification.
+
+        // Check if pre-release data is valid. It must consist of dot-separated identifiers, where
+        // each identifier is either a non-empty string of alphanumeric characters and hyphens, or a
+        // numeric identifier.
+        if (m_prerelease_data &&
+            !details::check_string_identifiers(m_prerelease_data.value(),
+                                               /* can include leading zeros */ false)) {
+            return false; // Identifiers must be valid according to the specification.
+        }
+
+        // Check if build metadata is valid. It must consist of dot-separated identifiers, where
+        // each identifier is a non-empty string of alphanumeric characters and hyphens.
+        if (m_build_metadata &&
+            !details::check_string_identifiers(m_build_metadata.value(),
+                                               /* can include leading zeros */ true)) {
+            return false; // Identifiers must be valid according to the specification.
+        }
+
+        return true;
+    }
+};
+
+/**
  * @brief Alias for version which has all the version numbers with the same types.
  *
  * @tparam NormalVersionNumberComponentT The type of the version numbers.
@@ -468,13 +510,8 @@ template <NormalVersionNumberComponent NormalVersionNumberComponentT>
 using uniform_version = basic_version<default_version_traits<NormalVersionNumberComponentT>>;
 
 /**
- * @brief Special alias for version which has all the version numbers with the same types and all
- * the other components as constant strings. This can be useful to define versions that are known at
- * compile time.
- *
- * @note Be careful using this on runtime contexts, because prerelease and build metadata data are
- * stored as string views, so they must point to valid strings for the entire lifetime of the
- * version object.
+ * @brief Special alias for version which has all the version numbers with the same types and
+ * pre-release and build metadata as std::string.
  *
  * @tparam NormalVersionNumberComponentT The type of the version numbers.
  */
@@ -493,7 +530,7 @@ static_assert(Version<version>);
 /**
  * @brief Special alias for a version with all the version numbers as the default normal version
  * number component and all the other components as constant strings. This can be useful to define
- * versions that are known at compile time.
+ * immutable versions that are known at compile time.
  *
  * @note Be careful using this on runtime contexts, because prerelease and build metadata data are
  * stored as string views, so they must point to valid strings for the entire lifetime of the
@@ -562,19 +599,17 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
     // Reference: https://semver.org/#spec-item-11
     auto parts1 =
         lhs | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
-            return std::string{part.data(), part.size()};
+            return std::string_view{part.data(), part.size()};
         });
-    std::vector<std::string> splitView1{parts1.begin(), parts1.end()};
 
     auto parts2 =
         rhs | std::views::split(VERSION_STRING_SEPARATOR) | std::views::transform([](auto&& part) {
-            return std::string{part.data(), part.size()};
+            return std::string_view{part.data(), part.size()};
         });
-    std::vector<std::string> splitView2{parts2.begin(), parts2.end()};
 
-    auto it1 = std::begin(splitView1);
-    auto it2 = std::begin(splitView2);
-    for (; it1 != std::end(splitView1) && it2 != std::end(splitView2); ++it1, ++it2) {
+    auto it1 = std::ranges::begin(parts1);
+    auto it2 = std::ranges::begin(parts2);
+    for (; it1 != std::ranges::end(parts1) && it2 != std::ranges::end(parts2); ++it1, ++it2) {
         const std::string_view identifier1{*it1};
         const std::string_view identifier2{*it2};
 
@@ -589,7 +624,7 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
                 return num1 < num2;
             }
         } else {
-            // We can't just compare with operator > directly because if the identifiers are equal,
+            // We can't just compare with operator < directly because if the identifiers are equal,
             // we need to continue to the next identifier.
             if (identifier1 != identifier2) {
                 // Just compare them lexicographically, as per specification 11.4.2.
@@ -600,15 +635,8 @@ constexpr bool is_prelease_strictly_lower_than(const PrereleaseString auto& lhs,
 
     // If we're here, it means that all the compared identifiers are equal. In this case, the
     // version with more identifiers has higher precedence, as per specification 11.4.4.
-    return splitView1.size() < splitView2.size();
+    return std::ranges::distance(parts1) < std::ranges::distance(parts2);
 }
-
-static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha", "beta"));
-static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha", "alpha.1"));
-static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.2"));
-static_assert(is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.beta"));
-static_assert(is_prelease_strictly_lower_than<std::string_view>("13", "alpha"));
-static_assert(is_prelease_strictly_lower_than<std::string_view>("13", "45"));
 
 } // namespace details
 
@@ -753,9 +781,6 @@ static_assert((version{1, 1, 1} <=> version{2, 0, 0}) == std::strong_ordering::l
  * pre-release data and a plus sign before the build metadata, appending pre-release data first and
  * then build metadata, if both are present.
  *
- * @note This function will perform a sanity check before converting the version
- * to a string, and if the version is not valid, it will throw an exception.
- *
  * Reference: https://semver.org/#spec-item-2, https://semver.org/#spec-item-9,
  * https://semver.org/#spec-item-10
  *
@@ -777,19 +802,26 @@ auto to_string(const Version auto& ver) {
 }
 
 namespace details {
+/**
+ * @brief Check if a character is valid for a version string. Valid characters are alphanumeric
+ * characters, hyphens, the version string separator ('.') and the plus sign ('+').
+ *
+ * @param c The character to check.
+ * @return true if the character is valid for a version string, false otherwise.
+ */
 constexpr bool is_valid_char_for_version_string(const char c) noexcept {
     return is_alnum_or_hyphen(c) || c == VERSION_STRING_SEPARATOR || c == '+';
 }
 
-static_assert(is_valid_char_for_version_string('a'));
-static_assert(is_valid_char_for_version_string('Z'));
-static_assert(is_valid_char_for_version_string('0'));
-static_assert(is_valid_char_for_version_string('-'));
-static_assert(is_valid_char_for_version_string(VERSION_STRING_SEPARATOR));
-static_assert(is_valid_char_for_version_string('+'));
-static_assert(!is_valid_char_for_version_string(' '));
-static_assert(!is_valid_char_for_version_string('!'));
-
+/**
+ * @brief Check if a version string is valid. A valid version string must not be empty and must
+ * consist of valid characters for version strings only (alphanumeric characters, hyphens, the
+ * version string separator ('.') and the plus sign ('+')). This is a sanity check to avoid parsing
+ * strings that do not conform to the expected format.
+ *
+ * @param versionStr The version string to check.
+ * @return true if the version string is valid, false otherwise.
+ */
 constexpr bool is_valid_version_string(const std::string_view versionStr) noexcept {
     if (versionStr.empty()) {
         return false; // The version string must not be empty.
@@ -802,13 +834,6 @@ constexpr bool is_valid_version_string(const std::string_view versionStr) noexce
     }
     return true;
 }
-
-static_assert(is_valid_version_string("1.0.0"));
-static_assert(is_valid_version_string("1.0.0-alpha"));
-static_assert(is_valid_version_string("1.0.0+build.123"));
-static_assert(!is_valid_version_string(""));
-static_assert(!is_valid_version_string("1.0.0 "));
-static_assert(!is_valid_version_string("1.0.0!"));
 } // namespace details
 
 /**
@@ -855,11 +880,11 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
             return std::nullopt;
         }
         if (compIdx == 0) {
-            major = static_cast<typename VersionT::major_t>(std::stoull(std::string(part)));
+            major = static_cast<typename VersionT::major_t>(std::stoull(std::string{part}));
         } else if (compIdx == 1) {
-            minor = static_cast<typename VersionT::minor_t>(std::stoull(std::string(part)));
+            minor = static_cast<typename VersionT::minor_t>(std::stoull(std::string{part}));
         } else if (compIdx == 2) {
-            patch = static_cast<typename VersionT::patch_t>(std::stoull(std::string(part)));
+            patch = static_cast<typename VersionT::patch_t>(std::stoull(std::string{part}));
         }
         compIdx++;
     }
@@ -875,9 +900,8 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
         return VersionT{major, minor, patch};
     }
 
-    const auto selector = prereleaseAndBuildMetadataView[0];
     std::size_t dropCount{};
-    if (selector == '-') {
+    if (const auto selector = prereleaseAndBuildMetadataView[0]; selector == '-') {
         // Prerelease data is present.
         // Take while it encounters a '+' character, which indicates the start of the build
         // metadata.
@@ -923,6 +947,13 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
 }
 
 static_assert(from_string<version>("") == std::nullopt);
+static_assert(from_string<version>("1") == std::nullopt);
+static_assert(from_string<version>("1.0") == std::nullopt);
+static_assert(from_string<version>("1.0.0.0") == std::nullopt);
+static_assert(from_string<version>("....") == std::nullopt);
+static_assert(from_string<version>("..") == std::nullopt);
+static_assert(from_string<version>("junk-data") == std::nullopt);
+static_assert(from_string<version>("nan.nan.nan") == std::nullopt);
 } // namespace verso
 
 #endif // INCLUDE_VERSO_HPP

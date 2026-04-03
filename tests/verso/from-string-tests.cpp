@@ -48,6 +48,9 @@ public:
 
         // Invalid scenarios
         test_invalid_scenario("");
+        test_invalid_scenario(" ");
+        test_invalid_scenario("..");
+        test_invalid_scenario("junk-data");
         test_invalid_scenario("1");
         test_invalid_scenario("1.-89.0");
         test_invalid_scenario("1.2.-3");

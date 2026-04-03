@@ -1,8 +1,83 @@
 // Copyright (c) 2025-2026 Andrea Ballestrazzi
 #include "verso/verso.hpp"
 
+// C++ STL
+#include <string_view>
+
 // This file is used to perform static assertions on concepts and other compile-time
 namespace verso::tests {
+
+namespace library_implementation_tests {
+
+static_assert(details::is_valid_version_number_digit('0'));
+static_assert(details::is_valid_version_number_digit('9'));
+static_assert(!details::is_valid_version_number_digit('a'));
+static_assert(!details::is_valid_version_number_digit(' '));
+static_assert(!details::is_valid_version_number_digit('-'));
+
+static_assert(details::is_numeric_identifier<std::string_view>("0"));
+static_assert(details::is_numeric_identifier<std::string_view>("1234567890"));
+static_assert(!details::is_numeric_identifier<std::string_view>(""));
+static_assert(!details::is_numeric_identifier<std::string_view>("a123"));
+static_assert(!details::is_numeric_identifier<std::string_view>("-23"));
+
+static_assert(details::is_alnum_or_hyphen('a'));
+static_assert(details::is_alnum_or_hyphen('Z'));
+static_assert(details::is_alnum_or_hyphen('0'));
+static_assert(details::is_alnum_or_hyphen('-'));
+static_assert(!details::is_alnum_or_hyphen(' '));
+static_assert(!details::is_alnum_or_hyphen('!'));
+static_assert(!details::is_alnum_or_hyphen(VERSION_STRING_SEPARATOR));
+
+static_assert(details::is_identifier_valid<std::string_view>("0", false));
+static_assert(details::is_identifier_valid<std::string_view>("alpha", false));
+static_assert(details::is_identifier_valid<std::string_view>("alpha", false));
+static_assert(details::is_identifier_valid<std::string_view>("alpha-1", false));
+static_assert(!details::is_identifier_valid<std::string_view>("", false));
+static_assert(!details::is_identifier_valid<std::string_view>("01", false));
+static_assert(!details::is_identifier_valid<std::string_view>("00000001", false));
+static_assert(!details::is_identifier_valid<std::string_view>("+1", false));
+static_assert(!details::is_identifier_valid<std::string_view>("1gfd!.", false));
+static_assert(details::is_identifier_valid<std::string_view>("alpha", true));
+static_assert(details::is_identifier_valid<std::string_view>("alpha-1", true));
+static_assert(details::is_identifier_valid<std::string_view>("01", true));
+static_assert(details::is_identifier_valid<std::string_view>("00000001", true));
+static_assert(!details::is_identifier_valid<std::string_view>("", false));
+
+static_assert(details::check_string_identifiers<std::string_view>("alpha.1", false));
+static_assert(details::check_string_identifiers<std::string_view>("beta-54", false));
+static_assert(details::check_string_identifiers<std::string_view>("01.0.0", true));
+static_assert(!details::check_string_identifiers<std::string_view>("", false));
+static_assert(!details::check_string_identifiers<std::string_view>("alpha..1", false));
+static_assert(!details::check_string_identifiers<std::string_view>("alpha.01", false));
+static_assert(!details::check_string_identifiers<std::string_view>("alpha.", false));
+static_assert(!details::check_string_identifiers<std::string_view>(".alpha", false));
+
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha", "beta"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha", "alpha.1"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.2"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("alpha.1", "alpha.beta"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("13", "alpha"));
+static_assert(details::is_prelease_strictly_lower_than<std::string_view>("13", "45"));
+
+static_assert(details::is_valid_char_for_version_string('a'));
+static_assert(details::is_valid_char_for_version_string('Z'));
+static_assert(details::is_valid_char_for_version_string('0'));
+static_assert(details::is_valid_char_for_version_string('-'));
+static_assert(details::is_valid_char_for_version_string(VERSION_STRING_SEPARATOR));
+static_assert(details::is_valid_char_for_version_string('+'));
+static_assert(!details::is_valid_char_for_version_string(' '));
+static_assert(!details::is_valid_char_for_version_string('!'));
+
+static_assert(details::is_valid_version_string("1.0.0"));
+static_assert(details::is_valid_version_string("1.0.0-alpha"));
+static_assert(details::is_valid_version_string("1.0.0+build.123"));
+static_assert(!details::is_valid_version_string(""));
+static_assert(!details::is_valid_version_string("1.0.0 "));
+static_assert(!details::is_valid_version_string("1.0.0!"));
+
+} // namespace library_implementation_tests
+
 namespace normal_version_number_concept_tests {
 static_assert(NormalVersionNumberComponent<unsigned int>);
 static_assert(NormalVersionNumberComponent<unsigned long>);
