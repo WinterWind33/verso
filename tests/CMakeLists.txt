@@ -39,5 +39,7 @@ if(VERSO_BUILD_TESTS)
     verso_add_runner_test(verso.from_string_tests "from_string() function tests")
     verso_add_runner_test(verso.to_string_tests "to_string() function tests")
     verso_add_runner_test(verso.comparison_operators_tests "comparison operators tests")
+    verso_add_runner_test(verso.prerelease_comparison_tests "prerelease comparison tests")
+    verso_add_runner_test(verso.buildmetadata_comparison_tests "build metadata comparison tests")
 
 endif() # VERSO_BUILD_TESTS

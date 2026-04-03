@@ -5,6 +5,7 @@
 // C++ STL
 #include <concepts>
 #include <format>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -201,6 +202,60 @@ public:
             m_result = false;
         }
     }
+
+    /**
+     * @brief Asserts that the given function throws an exception when called.
+     *
+     * @param what The description of the test.
+     * @param func The function to test.
+     * @return true if the function throws an exception, false otherwise.
+     */
+    bool test_should_throw(const std::string_view what, const std::function<void()>& func);
+
+    /**
+     * @brief Asserts that the given function does not throw an exception when called, and returns
+     * the result of the function if it does not throw an exception. If the function throws an
+     * exception, the test is marked as failed and the provided default value is returned.
+     *
+     * @tparam ReturnType The return type of the function.
+     * @param what The description of the test.
+     * @param func The function to test.
+     * @param defaultValue The default value to return if the function throws an exception.
+     * @return The result of the function if no exception is thrown, otherwise the default value.
+     */
+    template <typename ReturnType>
+        requires(!std::same_as<ReturnType, void>)
+    ReturnType test_should_not_throw(const std::string_view what,
+                                     const std::function<ReturnType()>& func,
+                                     const ReturnType& defaultValue) noexcept {
+        try {
+            return func();
+        } catch (const std::exception& e) {
+            m_failure_reasons.push_back(std::format(
+                "[test_should_not_throw] {}. Expected no exception to be thrown, but an "
+                "exception was thrown. Exception message: {}",
+                what, e.what()));
+            m_result = false;
+        } catch (...) {
+            m_failure_reasons.push_back(std::format(
+                "[test_should_not_throw] {}. Expected no exception to be thrown, but an "
+                "unknown exception was thrown.",
+                what));
+            m_result = false;
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * @brief Asserts that the given function does not throw an exception when called.
+     *
+     * @param what The description of the test.
+     * @param func The function to test.
+     * @return true if the function does not throw an exception, false otherwise.
+     */
+    bool test_should_not_throw(const std::string_view what,
+                               const std::function<void()>& func) noexcept;
 
 protected:
     std::string m_name{};

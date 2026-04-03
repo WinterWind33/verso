@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Andrea Ballestrazzi
 #include "verso/verso.hpp"
 
+// C++ STL
+#include <format>
+#include <optional>
+#include <string>
+#include <string_view>
+
 #include "test.hpp"
 
 namespace verso::tests {
@@ -13,215 +19,93 @@ class FromStringTests final : public Test {
 public:
     FromStringTests() : Test{"from_string() function tests"} {}
 
-    void run() override { // Empty string
-        {
-            const auto result{from_string<version>("")};
-            test_false("Result from empty string should be nullopt", result.has_value());
-        }
+    void run() override {
+        test_valid_scenario("0.0.0", version{0, 0, 0});
+        test_valid_scenario("1.2.3", version{1, 2, 3});
+        test_valid_scenario("10.20.30", version{10, 20, 30});
 
-        // Valid version strings
-        {
-            const auto result{from_string<version>("1.0.0")};
-            if (test_true("Result from \'1.0.0\' should have a value", result.has_value())) {
-                test_true("Major version should be 1", result->major == 1);
-                test_true("Minor version should be 0", result->minor == 0);
-                test_true("Patch version should be 0", result->patch == 0);
-            }
-        }
-        {
-            const auto result{from_string<version>("0.1.2")};
-            if (test_true("Result from \'0.1.2\' should have a value", result.has_value())) {
-                test_true("Major version should be 0", result->major == 0);
-                test_true("Minor version should be 1", result->minor == 1);
-                test_true("Patch version should be 2", result->patch == 2);
-            }
-        }
-        {
-            const auto result{from_string<version>("10.20.30")};
-            if (test_true("Result from \'10.20.30\' should have a value", result.has_value())) {
-                test_true("Major version should be 10", result->major == 10);
-                test_true("Minor version should be 20", result->minor == 20);
-                test_true("Patch version should be 30", result->patch == 30);
-            }
-        }
+        // Prerelease. Examples from specification
+        test_valid_scenario("1.0.0-alpha", version{1, 0, 0, "alpha"});
+        test_valid_scenario("1.0.0-alpha.1", version{1, 0, 0, "alpha.1"});
+        test_valid_scenario("1.0.0-0.3.7", version{1, 0, 0, "0.3.7"});
+        test_valid_scenario("1.0.0-x.7.z.92", version{1, 0, 0, "x.7.z.92"});
+        test_valid_scenario("1.0.0-x.y.z.--", version{1, 0, 0, "x.y.z.--"});
 
-        // Invalid version strings
-        {
-            constexpr std::string_view testStr{"1.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // Valid but unsupported semantic versions
-        {
-            constexpr std::string_view testStr{"1.0.0-alpha"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.0-beta"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.0+build.1"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // Missing components
-        {
-            constexpr std::string_view testStr{"1..0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0."};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{".1.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // Leading zeros
-        {
-            constexpr std::string_view testStr{"01.0.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.01.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.01"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // Non-numeric characters
-        {
-            constexpr std::string_view testStr{"a.b.c"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.b.3"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.2.c"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // Negative numbers (not possible with unsigned types)
-        // as per semantic versioning specification
-        {
-            constexpr std::string_view testStr{"-1.0.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.-1.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.-1"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // too much dots
-        {
-            constexpr std::string_view testStr{"1.0.0.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"...1.0.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.0..."};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        // Not versions at all
-        {
-            constexpr std::string_view testStr{"hello world!"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.0\n"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"version 1.0.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.0 version"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{" "};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"\t"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"\n"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"Yesterday i saw a version 1.0.0 in the sky!"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"1.0.0 is the version i saw yesterday!"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"Yesterday i saw a version 1.0.0"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{
-                "My father always told me: do not leave 127.0.0.1 alone!"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{
-                "My grandmother said to me that in 1965 she saw a flying jellyfish."};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
-        {
-            constexpr std::string_view testStr{"I\'m having too much fun writing these tests!"};
-            const auto result{from_string<version>(testStr)};
-            test_is_nullopt(testStr, result);
-        }
+        // Build metadata. Examples from specification
+        test_valid_scenario("1.0.0-alpha+001", version{1, 0, 0, "alpha", "001"});
+        test_valid_scenario("1.0.0+20130313144700",
+                            version{1, 0, 0, std::nullopt, "20130313144700"});
+        test_valid_scenario("1.0.0-beta+exp.sha.5114f85",
+                            version{1, 0, 0, "beta", "exp.sha.5114f85"});
+        test_valid_scenario("1.0.0+21AF26D3----117B344092BD",
+                            version{1, 0, 0, std::nullopt, "21AF26D3----117B344092BD"});
+        // Everything after the first '+' character is considered build metadata, even if it
+        // contains a '-' character, which is valid according to the specification.
+        test_valid_scenario("1.0.0+metadatabefore-prerelease",
+                            version{1, 0, 0, std::nullopt, "metadatabefore-prerelease"});
+
+        // Invalid scenarios
+        test_invalid_scenario("");
+        test_invalid_scenario(" ");
+        test_invalid_scenario("..");
+        test_invalid_scenario("junk-data");
+        test_invalid_scenario("1");
+        test_invalid_scenario("1.-89.0");
+        test_invalid_scenario("1.2.-3");
+        test_invalid_scenario("1.+2.3");
+        test_invalid_scenario("1.2.+3");
+        test_invalid_scenario("1.2");
+        test_invalid_scenario("1.2.3.4");
+        test_invalid_scenario("1.2.3-");
+        test_invalid_scenario("1.2.3+");
+        test_invalid_scenario("01.2.3");
+        test_invalid_scenario("1.02.3");
+        test_invalid_scenario("1.2.03");
+        test_invalid_scenario("1.2.3-01");
+        test_invalid_scenario("1.0.0-alpha..1");
+        test_invalid_scenario("1.0.0-alpha..");
+        test_invalid_scenario("1.0.0-alpha#");
+        test_invalid_scenario("1.0.0-alpha+");
+        test_invalid_scenario("1.0.0-alpha+001..");
+        test_invalid_scenario("1.0.0-alpha+001#");
+        test_invalid_scenario("1.0.0+amazing-version!");
+        test_invalid_scenario("1.0.0-+");
     }
 
 private:
-    void test_is_nullopt(const std::string_view versionString, const std::optional<version>& opt) {
-        test_false("Result from \'" + std::string(versionString) + "\' should be nullopt",
-                   opt.has_value());
+    void test_invalid_scenario(const std::string_view versionString) {
+        const auto result{from_string<version>(versionString)};
+        test_false(std::format("Result from \'{}\' should not have a value", versionString),
+                   result.has_value());
+    }
+
+    void test_valid_scenario(const std::string_view versionString, const version& expected) {
+        const auto result{from_string<version>(versionString)};
+        if (test_true(std::format("Result from \'{}\' should have a value", versionString),
+                      result.has_value())) {
+            test_true(std::format("Major version should be {}", expected.major()),
+                      result->major() == expected.major());
+            test_true(std::format("Minor version should be {}", expected.minor()),
+                      result->minor() == expected.minor());
+            test_true(std::format("Patch version should be {}", expected.patch()),
+                      result->patch() == expected.patch());
+
+            if (const auto expPrerelease{expected.prerelease_data()}; expPrerelease) {
+                test_true(std::format("Pre-release data should be '{}'", *expPrerelease),
+                          result->prerelease_data() == expected.prerelease_data());
+            } else {
+                test_true("Pre-release data should be nullopt",
+                          !result->prerelease_data().has_value());
+            }
+
+            if (const auto expBuildMetadata{expected.build_metadata()}; expBuildMetadata) {
+                test_true(std::format("Build metadata should be '{}'", *expBuildMetadata),
+                          result->build_metadata() == expected.build_metadata());
+            } else {
+                test_true("Build metadata should be nullopt",
+                          !result->build_metadata().has_value());
+            }
+        }
     }
 };
 
