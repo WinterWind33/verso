@@ -8,6 +8,7 @@
 #include <concepts>
 #include <cstdint>
 #include <format>
+#include <numeric> // for std::accumulate
 #include <optional>
 #include <ranges>
 #include <stdexcept>
@@ -44,6 +45,9 @@ using default_normal_version_number_component = std::uint32_t;
 
 template <typename SupportedStringType>
 concept SupportedString = std::convertible_to<SupportedStringType, std::string_view>;
+
+static_assert(SupportedString<std::string_view>);
+static_assert(SupportedString<std::string>);
 
 /**
  * @brief Concept representing a pre-release string. Pre-release identifiers are used in pre-release
@@ -772,6 +776,41 @@ auto to_string(const Version auto& ver) {
     return formatStr;
 }
 
+namespace details {
+constexpr bool is_valid_char_for_version_string(const char c) noexcept {
+    return is_alnum_or_hyphen(c) || c == VERSION_STRING_SEPARATOR || c == '+';
+}
+
+static_assert(is_valid_char_for_version_string('a'));
+static_assert(is_valid_char_for_version_string('Z'));
+static_assert(is_valid_char_for_version_string('0'));
+static_assert(is_valid_char_for_version_string('-'));
+static_assert(is_valid_char_for_version_string(VERSION_STRING_SEPARATOR));
+static_assert(is_valid_char_for_version_string('+'));
+static_assert(!is_valid_char_for_version_string(' '));
+static_assert(!is_valid_char_for_version_string('!'));
+
+constexpr bool is_valid_version_string(const std::string_view versionStr) noexcept {
+    if (versionStr.empty()) {
+        return false; // The version string must not be empty.
+    }
+
+    for (const char c : versionStr) {
+        if (!is_valid_char_for_version_string(c)) {
+            return false; // The version string contains invalid characters.
+        }
+    }
+    return true;
+}
+
+static_assert(is_valid_version_string("1.0.0"));
+static_assert(is_valid_version_string("1.0.0-alpha"));
+static_assert(is_valid_version_string("1.0.0+build.123"));
+static_assert(!is_valid_version_string(""));
+static_assert(!is_valid_version_string("1.0.0 "));
+static_assert(!is_valid_version_string("1.0.0!"));
+} // namespace details
+
 /**
  * @brief Convert a string to a version. The string MUST be in the format
  * "major.minor.patch", where major, minor and patch are non-negative integers without
@@ -785,51 +824,92 @@ auto to_string(const Version auto& ver) {
  */
 template <Version VersionT>
 constexpr std::optional<VersionT> from_string(const std::string_view versionStr) {
-    if (versionStr.empty()) {
+    if (!details::is_valid_version_string(versionStr)) {
         return std::nullopt;
     }
 
-    std::optional<typename VersionT::major_t> major{};
-    std::optional<typename VersionT::minor_t> minor{};
-    std::optional<typename VersionT::patch_t> patch{};
-    std::string_view::const_iterator startIt{std::cbegin(versionStr)};
-    std::string_view::const_iterator it{
-        std::find(startIt, std::cend(versionStr), VERSION_STRING_SEPARATOR)};
-    for (; it != std::cend(versionStr);
-         it = std::find(startIt, std::cend(versionStr), VERSION_STRING_SEPARATOR)) {
-        const std::string_view token{startIt, it};
-        if (!details::is_numeric_identifier(token)) {
-            // If it's not a valid normal version number, return std::nullopt directly.
+    // Firstly, we parse the core version string.
+    auto coreVersionView = versionStr | std::views::take_while([](const char c) {
+                               return c != '-' && c != '+';
+                           });
+
+    auto coreVersionParts = coreVersionView | std::views::split(VERSION_STRING_SEPARATOR);
+    if (std::ranges::distance(coreVersionParts.begin(), coreVersionParts.end()) != 3) {
+        // The core version string must have exactly 3 parts: major, minor and
+        // patch.
+        return std::nullopt;
+    }
+    typename VersionT::major_t major{};
+    typename VersionT::minor_t minor{};
+    typename VersionT::patch_t patch{};
+    for (std::uint8_t compIdx{};
+         const auto part : coreVersionParts | std::views::transform([](auto&& part) {
+                               return std::string_view{part.data(), part.size()};
+                           })) {
+        if (!details::is_numeric_identifier(part)) {
+            // The major, minor and patch version numbers must be numeric
             return std::nullopt;
         }
+        if (compIdx == 0) {
+            major = static_cast<typename VersionT::major_t>(std::stoull(std::string(part)));
+        } else if (compIdx == 1) {
+            minor = static_cast<typename VersionT::minor_t>(std::stoull(std::string(part)));
+        } else if (compIdx == 2) {
+            patch = static_cast<typename VersionT::patch_t>(std::stoull(std::string(part)));
+        }
+        compIdx++;
+    }
 
-        // Otherwise, convert it to the appropriate type.
-        if (!major) {
-            major = static_cast<typename VersionT::major_t>(std::stoul(std::string(token)));
-        } else if (!minor) {
-            minor = static_cast<typename VersionT::minor_t>(std::stoul(std::string(token)));
-        } else {
-            // More than 3 components, invalid version string.
+    // Now we parse the pre-release data and build metadata, if they are present.
+    std::optional<typename VersionT::prerelease_string_t> prereleaseData{};
+    std::optional<typename VersionT::build_metadata_string_t> buildMetadata{};
+    auto prereleaseAndBuildMetadataView = versionStr | std::views::drop_while([](const char c) {
+                                              return c != '-' && c != '+';
+                                          });
+    if (prereleaseAndBuildMetadataView.empty()) {
+        // If there is no pre-release data and build metadata, we can return the version now.
+        return VersionT{major, minor, patch};
+    }
+
+    const auto selector = prereleaseAndBuildMetadataView[0];
+    std::size_t dropCount{};
+    if (selector == '-') {
+        // Prerelease data is present.
+        // Take while it encounters a '+' character, which indicates the start of the build
+        // metadata.
+        auto prereleaseDataView = prereleaseAndBuildMetadataView | std::views::drop(1) |
+                                  std::views::take_while([](const char c) {
+                                      return c != '+';
+                                  });
+        std::string prereleaseDataStr{};
+        std::ranges::copy(prereleaseDataView, std::back_inserter(prereleaseDataStr));
+        if (prereleaseDataStr.empty() ||
+            !details::check_string_identifiers(prereleaseDataStr,
+                                               /* can include leading zeros */ false)) {
+            // If there is a '-' character, there must be pre-release data after it.
             return std::nullopt;
         }
-
-        // It's safe here to increment it because we can be here only if it != <end>.
-        startIt = it + 1;
+        prereleaseData = std::move(prereleaseDataStr);
+        // The "1" is for the '-' character that we need to drop, and the rest is for the
+        // pre-release data that we just dropped.
+        dropCount = 1 + std::ranges::distance(prereleaseDataView.begin(), prereleaseDataView.end());
     }
 
-    // Handle the last component (or the only one if there are no dots).
-    if (const std::string_view lastToken{startIt, std::cend(versionStr)};
-        details::is_numeric_identifier(lastToken)) {
-        // This should only be the patch number because we suppose that major and minor are
-        // already set.
-        patch = static_cast<typename VersionT::patch_t>(std::stoul(std::string(lastToken)));
+    // Build metadata.
+    // We need to drop the pre-release data (which contains the '-' in the dropCount) and the build
+    // metadata selector (which is the '+' character).
+    auto buildMetadataView = prereleaseAndBuildMetadataView | std::views::drop(1 + dropCount);
+    std::string buildMetadataStr{};
+    std::ranges::copy(buildMetadataView, std::back_inserter(buildMetadataStr));
+    if (buildMetadataStr.empty() ||
+        !details::check_string_identifiers(buildMetadataStr,
+                                           /* can include leading zeros */ true)) {
+        // If there is a '+' character, there must be build metadata after it.
+        return VersionT{major, minor, patch, std::move(prereleaseData), std::nullopt};
     }
+    buildMetadata = std::move(buildMetadataStr);
 
-    if (major && minor && patch) {
-        return VersionT{*major, *minor, *patch};
-    }
-
-    return std::nullopt;
+    return VersionT{major, minor, patch, std::move(prereleaseData), std::move(buildMetadata)};
 }
 
 static_assert(from_string<version>("") == std::nullopt);

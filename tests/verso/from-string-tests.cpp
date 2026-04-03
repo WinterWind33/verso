@@ -51,6 +51,9 @@ public:
         test_invalid_scenario("1.2.3.4");
         test_invalid_scenario("1.2.3-");
         test_invalid_scenario("1.2.3+");
+        test_invalid_scenario("01.2.3");
+        test_invalid_scenario("1.02.3");
+        test_invalid_scenario("1.2.03");
         test_invalid_scenario("1.2.3-01");
         test_invalid_scenario("1.0.0-alpha..1");
         test_invalid_scenario("1.0.0-alpha..");
