@@ -100,7 +100,10 @@ public:
             test_valid_prerelease_set(ver, "0.3.7");
             test_valid_prerelease_set(ver, "x.7.z.92");
             test_valid_prerelease_set(ver, "x-y-z.--");
+            test_valid_prerelease_set(ver, "0alpha");
+            test_valid_prerelease_set(ver, "001alpha");
             test_valid_build_metadata_set(ver, "001");
+            test_valid_build_metadata_set(ver, "001build");
             test_valid_build_metadata_set(ver, "20130313144700");
             test_valid_build_metadata_set(ver, "exp.sha.5114f85");
             test_valid_build_metadata_set(ver, "21AF26D3----117B344092");

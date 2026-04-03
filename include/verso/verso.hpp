@@ -213,13 +213,34 @@ constexpr bool is_valid_version_number_digit(const char c) noexcept {
 }
 
 /**
+ * @brief Only checks if the string is composed of valid version number digits, without checking for
+ * leading zeros or other invalid formats.
+ *
+ * @param str The string to check.
+ * @return true if the string is composed of valid version number digits, false otherwise.
+ */
+constexpr bool is_number(const SupportedString auto& str) noexcept {
+    if (std::string_view{str}.empty()) {
+        return false; // The string must not be empty.
+    }
+
+    for (const char c : std::string_view{str}) {
+        if (!is_valid_version_number_digit(c)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
  * @brief Check if an identifier is numeric.
  *
  * @param identifier The identifier string.
  * @return true if the identifier is numeric, false otherwise.
  */
 constexpr bool is_numeric_identifier(const SupportedString auto& identifier) {
-    if (identifier.empty()) {
+    const std::string_view view{identifier};
+    if (view.empty()) {
         return false;
     }
 
@@ -229,16 +250,11 @@ constexpr bool is_numeric_identifier(const SupportedString auto& identifier) {
     //                | <positive digit><digits>
     // So we cannot have leading zeros nor negative numbers, and we must have at least one digit.
 
-    if (identifier.size() > 1 && identifier[0] == '0') {
+    if (view.size() > 1 && view[0] == '0') {
         return false; // Leading zero
     }
 
-    for (const char c : identifier) {
-        if (!is_valid_version_number_digit(c)) {
-            return false;
-        }
-    }
-    return true;
+    return is_number(view);
 }
 
 /**
@@ -250,7 +266,8 @@ constexpr bool is_numeric_identifier(const SupportedString auto& identifier) {
  * @return true if the character is an alphanumeric character or a hyphen, false otherwise.
  */
 constexpr bool is_alnum_or_hyphen(const char c) noexcept {
-    return c == '-' || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    return c == '-' || is_valid_version_number_digit(c) || (c >= 'A' && c <= 'Z') ||
+           (c >= 'a' && c <= 'z');
 }
 
 /**
@@ -265,19 +282,21 @@ constexpr bool is_alnum_or_hyphen(const char c) noexcept {
  */
 constexpr bool is_identifier_valid(const SupportedString auto& id,
                                    const bool canIncludeLeadingZeroes) noexcept {
-    if (id.empty()) {
+    const std::string_view view{id};
+    if (view.empty()) {
         return false; // Identifiers must not be empty.
     }
 
-    if (!canIncludeLeadingZeroes && id.size() > 1 && id[0] == '0') {
-        return false; // Leading zeroes are not allowed for normal version numbers.
-    }
-
-    for (const char c : id) {
+    for (const char c : view) {
         if (!details::is_alnum_or_hyphen(c)) {
             return false; // Identifiers must consist of alphanumeric characters and hyphens only.
         }
     }
+
+    if (!canIncludeLeadingZeroes && view.size() > 1 && view[0] == '0' && details::is_number(view)) {
+        return false; // Leading zeroes are not allowed for normal version numbers.
+    }
+
     return true;
 }
 

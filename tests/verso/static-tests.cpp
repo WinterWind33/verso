@@ -15,11 +15,20 @@ static_assert(!details::is_valid_version_number_digit('a'));
 static_assert(!details::is_valid_version_number_digit(' '));
 static_assert(!details::is_valid_version_number_digit('-'));
 
+static_assert(details::is_number("0"));
+static_assert(details::is_number("1234567890"));
+static_assert(details::is_number("0000000000"));
+static_assert(details::is_number("01"));
+static_assert(details::is_number("00000001"));
+static_assert(!details::is_number(""));
+
 static_assert(details::is_numeric_identifier<std::string_view>("0"));
 static_assert(details::is_numeric_identifier<std::string_view>("1234567890"));
 static_assert(!details::is_numeric_identifier<std::string_view>(""));
 static_assert(!details::is_numeric_identifier<std::string_view>("a123"));
 static_assert(!details::is_numeric_identifier<std::string_view>("-23"));
+static_assert(!details::is_numeric_identifier<std::string_view>("12.3"));
+static_assert(!details::is_numeric_identifier<std::string_view>("01"));
 
 static_assert(details::is_alnum_or_hyphen('a'));
 static_assert(details::is_alnum_or_hyphen('Z'));
@@ -33,6 +42,8 @@ static_assert(details::is_identifier_valid<std::string_view>("0", false));
 static_assert(details::is_identifier_valid<std::string_view>("alpha", false));
 static_assert(details::is_identifier_valid<std::string_view>("alpha", false));
 static_assert(details::is_identifier_valid<std::string_view>("alpha-1", false));
+static_assert(details::is_identifier_valid<std::string_view>("01alpha", false));
+static_assert(details::is_identifier_valid<std::string_view>("0alpha", false));
 static_assert(!details::is_identifier_valid<std::string_view>("", false));
 static_assert(!details::is_identifier_valid<std::string_view>("01", false));
 static_assert(!details::is_identifier_valid<std::string_view>("00000001", false));
