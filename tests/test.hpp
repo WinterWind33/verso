@@ -236,6 +236,9 @@ public:
         return defaultValue;
     }
 
+    bool test_should_not_throw(const std::string_view what,
+                               const std::function<void()>& func) noexcept;
+
 protected:
     std::string m_name{};
 

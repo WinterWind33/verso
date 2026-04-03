@@ -59,4 +59,25 @@ bool Test::test_should_throw(const std::string_view what, const std::function<vo
     return false;
 }
 
+bool Test::test_should_not_throw(const std::string_view what,
+                                 const std::function<void()>& func) noexcept {
+    try {
+        func();
+    } catch (const std::exception& e) {
+        m_failure_reasons.push_back(std::format(
+            "[test_should_not_throw] {}. Expected no exception to be thrown, but an exception "
+            "was thrown. Exception message: {}",
+            what, e.what()));
+        m_result = false;
+    } catch (...) {
+        m_failure_reasons.push_back(std::format(
+            "[test_should_not_throw] {}. Expected no exception to be thrown, but an unknown "
+            "exception was thrown.",
+            what));
+        m_result = false;
+    }
+
+    return m_result;
+}
+
 } // namespace verso::tests
