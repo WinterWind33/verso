@@ -948,8 +948,10 @@ bool try_load_number(const std::string_view str, NormalVersionNumberComponentT& 
     }
 
     try {
-        const auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), out);
+        NormalVersionNumberComponentT tempOut{};
+        const auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), tempOut);
         if (ec == std::errc()) {
+            out = tempOut;
             return true;
         }
         return false;
