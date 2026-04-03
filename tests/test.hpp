@@ -212,6 +212,30 @@ public:
      */
     bool test_should_throw(const std::string_view what, const std::function<void()>& func);
 
+    template <typename ReturnType>
+        requires(!std::same_as<ReturnType, void>)
+    ReturnType test_should_not_throw(const std::string_view what,
+                                     const std::function<ReturnType()>& func,
+                                     const ReturnType& defaultValue) noexcept {
+        try {
+            return func();
+        } catch (const std::exception& e) {
+            m_failure_reasons.push_back(std::format(
+                "[test_should_not_throw] {}. Expected no exception to be thrown, but an "
+                "exception was thrown. Exception message: {}",
+                what, e.what()));
+            m_result = false;
+        } catch (...) {
+            m_failure_reasons.push_back(std::format(
+                "[test_should_not_throw] {}. Expected no exception to be thrown, but an "
+                "unknown exception was thrown.",
+                what));
+            m_result = false;
+        }
+
+        return defaultValue;
+    }
+
 protected:
     std::string m_name{};
 
