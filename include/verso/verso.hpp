@@ -142,6 +142,63 @@ using default_version_traits =
                    NormalVersionNumberComponentType>;
 
 /**
+ * @brief Concept for a version supported by this library. A version MUST have the following
+ * members:
+ * - major: the major version number, of a type that satisfies the NormalVersionNumberComponent
+ * concept.
+ * - minor: the minor version number, of a type that satisfies the NormalVersionNumberComponent
+ * concept.
+ * - patch: the patch version number, of a type that satisfies the NormalVersionNumberComponent
+ * concept.
+ * - prerelease_data: an optional field that can be used to indicate that a version is a pre-release
+ * version, of a type that satisfies the PrereleaseString concept.
+ * - build_metadata: an optional field that can be used to indicate additional build information, of
+ * a type that satisfies the BuildMetadataString concept.
+ * This concept enforces only getters for these members, but the actual version class can have
+ * setters as well, as long as it satisfies the requirements of this concept.
+ *
+ * @tparam VersionT The type to check.
+ */
+template <typename VersionT>
+concept Version =
+    requires {
+        typename VersionT::major_t;
+        typename VersionT::minor_t;
+        typename VersionT::patch_t;
+        typename VersionT::prerelease_string_t;
+        typename VersionT::build_metadata_string_t;
+
+        requires NormalVersionNumberComponent<typename VersionT::major_t>;
+        requires NormalVersionNumberComponent<typename VersionT::minor_t>;
+        requires NormalVersionNumberComponent<typename VersionT::patch_t>;
+        requires PrereleaseString<typename VersionT::prerelease_string_t>;
+        requires BuildMetadataString<typename VersionT::build_metadata_string_t>;
+    } &&
+    requires(VersionT v) {
+        { v.major() } -> std::same_as<typename VersionT::major_t>;
+        { v.minor() } -> std::same_as<typename VersionT::minor_t>;
+        { v.patch() } -> std::same_as<typename VersionT::patch_t>;
+        {
+            v.prerelease_data()
+        } -> std::same_as<std::optional<typename VersionT::prerelease_string_t>>;
+        {
+            v.build_metadata()
+        } -> std::same_as<std::optional<typename VersionT::build_metadata_string_t>>;
+    } &&
+    // A version supported by verso should be constructible with all the sem ver components, in
+    // various ways.
+    requires(typename VersionT::major_t major, typename VersionT::minor_t minor,
+             typename VersionT::patch_t patch,
+             std::optional<typename VersionT::prerelease_string_t> prerelease_data,
+             std::optional<typename VersionT::build_metadata_string_t> build_metadata) {
+        { VersionT{major, minor, patch} } -> std::same_as<VersionT>;
+        { VersionT{major, minor, patch, prerelease_data} } -> std::same_as<VersionT>;
+        {
+            VersionT{major, minor, patch, prerelease_data, build_metadata}
+        } -> std::same_as<VersionT>;
+    };
+
+/**
  * @brief Semantic version string separator.
  *
  * Reference: https://semver.org/#spec-item-2
@@ -250,47 +307,6 @@ constexpr bool check_string_identifiers(const SupportedString auto& str,
 }
 
 } // namespace details
-
-/**
- * @brief Concept for a version supported by this library. A version MUST have the following
- * members:
- * - major: the major version number, of a type that satisfies the NormalVersionNumberComponent
- * concept.
- * - minor: the minor version number, of a type that satisfies the NormalVersionNumberComponent
- * concept.
- * - patch: the patch version number, of a type that satisfies the NormalVersionNumberComponent
- * concept.
- * - prerelease_data: an optional field that can be used to indicate that a version is a pre-release
- * version, of a type that satisfies the PrereleaseString concept.
- * - build_metadata: an optional field that can be used to indicate additional build information, of
- * a type that satisfies the BuildMetadataString concept.
- * This concept enforces only getters for these members, but the actual version class can have
- * setters as well, as long as it satisfies the requirements of this concept.
- *
- * @tparam VersionT The type to check.
- */
-template <typename VersionT>
-concept Version = requires {
-    typename VersionT::major_t;
-    typename VersionT::minor_t;
-    typename VersionT::patch_t;
-    typename VersionT::prerelease_string_t;
-    typename VersionT::build_metadata_string_t;
-
-    requires NormalVersionNumberComponent<typename VersionT::major_t>;
-    requires NormalVersionNumberComponent<typename VersionT::minor_t>;
-    requires NormalVersionNumberComponent<typename VersionT::patch_t>;
-    requires PrereleaseString<typename VersionT::prerelease_string_t>;
-    requires BuildMetadataString<typename VersionT::build_metadata_string_t>;
-} && requires(VersionT v) {
-    { v.major() } -> std::same_as<typename VersionT::major_t>;
-    { v.minor() } -> std::same_as<typename VersionT::minor_t>;
-    { v.patch() } -> std::same_as<typename VersionT::patch_t>;
-    { v.prerelease_data() } -> std::same_as<std::optional<typename VersionT::prerelease_string_t>>;
-    {
-        v.build_metadata()
-    } -> std::same_as<std::optional<typename VersionT::build_metadata_string_t>>;
-};
 
 /**
  * @brief Main version class, parametrized by the version traits.
