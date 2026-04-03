@@ -938,12 +938,13 @@ constexpr bool is_valid_version_string(const std::string_view versionStr) noexce
  * If parsing fails, it returns std::nullopt.
  *
  * @tparam VersionT A type that satisfies the Version concept.
- * @param versionStr The string to convert.
+ * @param str The string to convert.
  * @return An optional containing the version if the conversion was successful, std::nullopt
  * otherwise.
  */
 template <Version VersionT>
-constexpr std::optional<VersionT> from_string(const std::string_view versionStr) {
+constexpr std::optional<VersionT> from_string(const SupportedString auto& str) {
+    const std::string_view versionStr{str};
     if (!details::is_valid_version_string(versionStr)) {
         return std::nullopt;
     }
@@ -964,13 +965,15 @@ constexpr std::optional<VersionT> from_string(const std::string_view versionStr)
     typename VersionT::patch_t patch{};
     for (std::uint8_t compIdx{};
          const auto part : coreVersionParts | std::views::transform([](auto&& part) {
-                               return std::string_view{part.data(), part.size()};
+                               return std::string_view{std::ranges::data(part),
+                                                       std::ranges::size(part)};
                            })) {
         if (!details::is_numeric_identifier(part)) {
             // The major, minor and patch version numbers must be numeric
             return std::nullopt;
         }
         if (compIdx == 0) {
+            // TODO: Create a constexpr version of std::stoull.
             major = static_cast<typename VersionT::major_t>(std::stoull(std::string{part}));
         } else if (compIdx == 1) {
             minor = static_cast<typename VersionT::minor_t>(std::stoull(std::string{part}));
