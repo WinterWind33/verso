@@ -813,9 +813,13 @@ static_assert(!is_valid_version_string("1.0.0!"));
 
 /**
  * @brief Convert a string to a version. The string MUST be in the format
- * "major.minor.patch", where major, minor and patch are non-negative integers without
- * leading zeros unless the number is zero. If the given string is not valid, returns
- * std::nullopt.
+ * "major.minor.patch-<prerelease_data>+<build_metadata>", where major, minor and patch are
+ * non-negative integers without leading zeros unless the number is zero and the pre-release data
+ * and build metadata are optional and can be any string that follows the specification for
+ * pre-release data and build metadata, respectively. The function will perform a sanity check on
+ * the input string, and if it does not follow the expected format, it will return std::nullopt.
+ *
+ * If parsing fails, it returns std::nullopt.
  *
  * @tparam VersionT A type that satisfies the Version concept.
  * @param versionStr The string to convert.
