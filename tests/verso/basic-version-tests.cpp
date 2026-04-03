@@ -42,8 +42,6 @@ public:
             test_construction_not_throwing(1, 0, 0, std::nullopt, "20130313144700");
             test_construction_not_throwing(1, 0, 0, "beta", "exp.sha.5114f85");
             test_construction_not_throwing(1, 0, 0, std::nullopt, "21AF26D3----117B344092BD");
-            // Build metadata can contain leading zeros.
-            test_construction_not_throwing(1, 0, 0, std::nullopt, "00000000001");
         }
         // Construction with invalid parameters.
         {
@@ -84,6 +82,46 @@ public:
                 test_equal("Construction with parameters - build metadata value",
                            ver.build_metadata().value(), std::string{"build.123"});
             }
+        }
+        // Setters tests
+        {
+            version_test_type ver{};
+            ver.major(1);
+            ver.minor(2);
+            ver.patch(3);
+
+            test_true("Setters - major number should be set correctly", ver.major() == 1);
+            test_true("Setters - minor number should be set correctly", ver.minor() == 2);
+            test_true("Setters - patch number should be set correctly", ver.patch() == 3);
+
+            // Test valid prerelease data and build metadata.
+            test_valid_prerelease_set(ver, "alpha");
+            test_valid_prerelease_set(ver, "alpha.1");
+            test_valid_prerelease_set(ver, "0.3.7");
+            test_valid_prerelease_set(ver, "x.7.z.92");
+            test_valid_prerelease_set(ver, "x-y-z.--");
+            test_valid_build_metadata_set(ver, "001");
+            test_valid_build_metadata_set(ver, "20130313144700");
+            test_valid_build_metadata_set(ver, "exp.sha.5114f85");
+            test_valid_build_metadata_set(ver, "21AF26D3----117B344092");
+
+            // Invalid scenarios
+            test_invalid_prerelease_set(ver, "alpha..1");
+            test_invalid_prerelease_set(ver, "alpha.01");
+            test_invalid_prerelease_set(ver, "00000000001");
+            test_invalid_prerelease_set(ver, "alpha.");
+            test_invalid_prerelease_set(ver, ".alpha");
+            test_invalid_prerelease_set(ver, "");
+            test_invalid_prerelease_set(ver, ".");
+            test_invalid_prerelease_set(ver, "!nv@l!d");
+            test_invalid_build_metadata_set(ver, "build..meta");
+            test_invalid_build_metadata_set(ver, "amazing-build!");
+            test_invalid_build_metadata_set(ver, "");
+            test_invalid_build_metadata_set(ver, ".");
+            test_invalid_build_metadata_set(ver, "build.");
+            test_invalid_build_metadata_set(ver, ".build");
+            test_invalid_build_metadata_set(ver, "..........");
+            test_invalid_build_metadata_set(ver, "%$#");
         }
         // Equality operator (on core version data)
         {
@@ -160,6 +198,63 @@ private:
             [&]() {
                 return version_test_type{major, minor, patch, prerelease_data, build_metadata};
             });
+    }
+
+    void test_valid_prerelease_set(version_test_type& ver, const std::string& prerelease_data) {
+        test_should_not_throw(
+            std::format(
+                "Setters - prerelease data should be set without throwing with valid value '{}'",
+                prerelease_data),
+            [&]() {
+                ver.prerelease_data(prerelease_data);
+            });
+        if (test_true(std::format(
+                          "Setters - prerelease data should be set correctly with valid value '{}'",
+                          prerelease_data),
+                      ver.prerelease_data().has_value())) {
+            test_equal(
+                std::format("Setters - prerelease data value should be correct when setting '{}'",
+                            prerelease_data),
+                ver.prerelease_data().value(), prerelease_data);
+        }
+    }
+
+    void test_invalid_prerelease_set(version_test_type& ver, const std::string& prerelease_data) {
+        test_should_throw(
+            std::format("Setters - prerelease data should throw when setting invalid value '{}'",
+                        prerelease_data),
+            [&]() {
+                ver.prerelease_data(prerelease_data);
+            });
+    }
+
+    void test_invalid_build_metadata_set(version_test_type& ver,
+                                         const std::string& build_metadata) {
+        test_should_throw(
+            std::format("Setters - build metadata should throw when setting invalid value '{}'",
+                        build_metadata),
+            [&]() {
+                ver.build_metadata(build_metadata);
+            });
+    }
+
+    void test_valid_build_metadata_set(version_test_type& ver, const std::string& build_metadata) {
+        test_should_not_throw(
+            std::format(
+                "Setters - build metadata should be set without throwing with valid value '{}'",
+                build_metadata),
+            [&]() {
+                ver.build_metadata(build_metadata);
+            });
+        if (test_true(std::format(
+                          "Setters - build metadata should be set correctly with valid value '{}'",
+                          build_metadata),
+                      ver.build_metadata().has_value())) {
+            test_equal(
+                std::format("Setters - build metadata value should be correct when setting '{}'",
+                            build_metadata),
+                ver.build_metadata().value(), build_metadata);
+        }
     }
 };
 
