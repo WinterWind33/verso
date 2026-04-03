@@ -9,10 +9,10 @@ class BasicVersionTests final : public Test {
 public:
     BasicVersionTests() noexcept : Test{"basic_version class tests"} {}
 
-    void run() override {
-        using version_test_traits = version_traits<std::uint8_t, std::uint16_t, std::uint32_t>;
-        using version_test_type = basic_version<version_test_traits>;
+    using version_test_traits = version_traits<std::uint8_t, std::uint16_t, std::uint32_t>;
+    using version_test_type = basic_version<version_test_traits>;
 
+    void run() override {
         // Default construction
         {
             const version_test_type version{};
@@ -20,9 +20,30 @@ public:
             test_equal("Default construction - minor number", version.minor(), std::uint16_t{});
             test_equal("Default construction - patch number", version.patch(), 0u);
         }
-        // Construction with parameters
+        // Construction with parameters - Valid cases
         {
-            const version_test_type version{1, 2, 3};
+            test_construction_not_throwing(1, 2, 3);
+
+            // Scenarios taken from the specification examples.
+            // Prerelease only
+            test_construction_not_throwing(1, 0, 0, "alpha");
+            test_construction_not_throwing(1, 0, 0, "alpha.1");
+            test_construction_not_throwing(1, 0, 0, "0.3.7");
+            test_construction_not_throwing(1, 0, 0, "x.7.z.92");
+            test_construction_not_throwing(1, 0, 0, "x-y-z.--");
+            // Build metadata
+            test_construction_not_throwing(1, 0, 0, "alpha", "001");
+            test_construction_not_throwing(1, 0, 0, std::nullopt, "20130313144700");
+            test_construction_not_throwing(1, 0, 0, "beta", "exp.sha.5114f85");
+            test_construction_not_throwing(1, 0, 0, std::nullopt, "21AF26D3----117B344092BD");
+        }
+        {
+            const version_test_type version{test_should_not_throw<version_test_type>(
+                "Construction with parameters should not throw with valid parameters",
+                []() {
+                    return version_test_type{1, 2, 3};
+                },
+                version_test_type{})};
             test_equal("Construction with parameters - major number", version.major(),
                        std::uint8_t{1});
             test_equal("Construction with parameters - minor number", version.minor(),
@@ -42,6 +63,20 @@ public:
             test_false("Equality operator - different versions - operands order should not matter",
                        version3 == version1);
         }
+    }
+
+private:
+    void test_construction_not_throwing(
+        const version_test_traits::major_t major, const version_test_traits::minor_t minor,
+        const version_test_traits::patch_t patch,
+        const std::optional<std::string> prerelease_data = std::nullopt,
+        const std::optional<std::string> build_metadata = std::nullopt) {
+        test_should_not_throw<version_test_type>(
+            "Construction with parameters should not throw with valid parameters",
+            [&]() {
+                return version_test_type{major, minor, patch, prerelease_data, build_metadata};
+            },
+            {});
     }
 };
 
