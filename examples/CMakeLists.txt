@@ -7,3 +7,7 @@ set_target_properties(verso-example-basic
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${VERSO_EXAMPLES_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(verso-example-basic PRIVATE verso)
+
+if(UNIX)
+    target_compile_options(verso-example-basic PRIVATE -Wall -Wextra -Werror)
+endif()
