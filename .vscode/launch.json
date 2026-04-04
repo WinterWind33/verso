@@ -24,7 +24,8 @@
             "miDebuggerPath": "/usr/bin/gdb",
             "logging": {
                 "engineLogging": true
-            }
+            },
+            "preLaunchTask": "CMake: build"
         },
         {
             "name": "[Windows] (Debug) Launch verso tests",
@@ -37,7 +38,8 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "externalTerminal"
+            "console": "externalTerminal",
+            "preLaunchTask": "CMake: build"
         }
     ]
 }
