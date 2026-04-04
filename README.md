@@ -37,7 +37,7 @@ After this, you can use CMake to include verso in your project:
 ```cmake
 # You need to have CMake 3.19+
 add_subdirectory(path/to/verso)
-target_link_libraries(your_target PRIVATE verso)
+target_link_libraries(your_target INTERFACE verso)
 ```
 
 And you're ready to go!
