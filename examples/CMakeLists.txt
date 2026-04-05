@@ -30,9 +30,13 @@ add_executable(verso-example-cmake-version-generation "cmake-version-generation/
 target_link_libraries(verso-example-cmake-version-generation PRIVATE verso)
 target_include_directories(verso-example-cmake-version-generation PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 
+add_executable(verso-example-invalid-versions "invalid-versions/main.cpp")
+target_link_libraries(verso-example-invalid-versions PRIVATE verso)
+
 if(UNIX)
     target_compile_options(verso-example-basic PRIVATE -Wall -Wextra -Werror)
     target_compile_options(verso-example-comparisons PRIVATE -Wall -Wextra -Werror)
     target_compile_options(verso-example-from-string PRIVATE -Wall -Wextra -Werror)
     target_compile_options(verso-example-cmake-version-generation PRIVATE -Wall -Wextra -Werror)
+    target_compile_options(verso-example-invalid-versions PRIVATE -Wall -Wextra -Werror)
 endif()
