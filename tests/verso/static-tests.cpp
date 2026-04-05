@@ -7,6 +7,10 @@
 // This file is used to perform static assertions on concepts and other compile-time
 namespace verso::tests {
 
+static_assert(verso_version.major() == 0);
+static_assert(verso_version.minor() == 3);
+static_assert(verso_version.patch() == 0);
+
 namespace library_implementation_tests {
 
 static_assert(details::is_valid_version_number_digit('0'));
