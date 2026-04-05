@@ -94,7 +94,7 @@ bool res = ver1 < ver2;
 res = ver1 > ver3;
 ```
 
-You can find the full getting started guide in the [docs/getting-started.md](docs/getting-started.md) file.
+You can find the full getting started guide in the [docs/getting-started.md](docs/getting-started.md) file and more examples in the [examples](examples) directory.
 
 ## Development documentation
 
