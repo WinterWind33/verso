@@ -1,0 +1,16 @@
+// Copyright (c) 2026 Andrea Ballestrazzi
+#pragma once
+
+#include <verso/verso.hpp>
+
+namespace example {
+constexpr verso::constant_version GENERATED_VERSION {
+    // clang-format off
+        @VERSO_EXAMPLE_GEN_VERSION_MAJOR@,
+        @VERSO_EXAMPLE_GEN_VERSION_MINOR@,
+        @VERSO_EXAMPLE_GEN_VERSION_PATCH@,
+        "@VERSO_EXAMPLE_GEN_VERSION_PRE_RELEASE@",
+        "@VERSO_EXAMPLE_GEN_VERSION_BUILD_METADATA@"
+    // clang-format on
+};
+} // namespace example
