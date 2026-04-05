@@ -661,11 +661,11 @@ constexpr auto components(const Version auto& version) {
 // ### This library version ###
 
 /**
- * @brief The current version of the library, currently in development.
+ * @brief The current version of the library.
  *  To honor this library, when not in development, the library version will always be represented
  *  only by a "version" object.
  */
-constexpr constant_version verso_version{0, 3, 0, "dev"};
+constexpr version verso_version{0, 3, 0};
 
 // ### Comparison operators ###
 // Reference: https://semver.org/#spec-item-11
