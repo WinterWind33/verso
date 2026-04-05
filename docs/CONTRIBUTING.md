@@ -8,6 +8,7 @@ Thank you for your interest in contributing to Verso! We welcome contributions f
 2. **Make your changes** with clear, concise commits.
 3. **Test your changes** to ensure they work as expected.
 4. **Open a Pull Request** with a detailed description of your changes.
+5. Eventually, **Create an example project** in the `examples` directory if your contribution adds new functionality or demonstrates a new use case.
 
 ## Guidelines
 
@@ -15,6 +16,7 @@ Thank you for your interest in contributing to Verso! We welcome contributions f
 - Write clear commit messages.
 - Include tests for new features or bug fixes.
 - Update documentation as needed.
+- Add examples to demonstrate new features or use cases.
 
 Please, make sure to read our [Development Documentation](devs/README.md) for more details on setting up the development environment and creating tests.
 

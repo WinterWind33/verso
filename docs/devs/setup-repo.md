@@ -12,7 +12,8 @@ Using Visual Studio Code is highly recommended, you can find recommended extensi
 After that, you need to use CMake to configure the project. You will need to also have tests put in place, so make sure to hit the following commands:
 
 ```bash
-cmake -B build -DVERSO_BUILD_TESTS=ON # Required to build tests
+# VERSO_BUILD_TESTS=ON is required to build the tests, while VERSO_BUILD_EXAMPLES=ON is optional and can be omitted if you don't want to build the example projects.
+cmake -B build -DVERSO_BUILD_TESTS=ON -DVERSO_BUILD_EXAMPLES=ON
 cmake --build build
 ```
 

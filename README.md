@@ -66,7 +66,8 @@ Structured bindings:
 
 ```cpp
 // Structured binding
-auto [major, minor, patch, prerelease_data, build_metadata] = verso::components(ver); // major = 2, minor = 1, patch = 3, prerelease_data = std::nullopt, build_metadata = std::nullopt
+// major = 2, minor = 1, patch = 3, prerelease_data = std::nullopt, build_metadata = std::nullopt
+auto [major, minor, patch, prerelease_data, build_metadata] = verso::components(ver);
 ```
 
 Parsing versions from strings:
@@ -87,11 +88,13 @@ const verso::version ver1{1, 0, 0};
 const verso::version ver2{1, 0, 1};
 const verso::version ver3{1, 0, 0, "alpha"};
 
-bool res = ver1 < ver2; // true
-res = ver1 > ver3; // true, because pre-release versions have lower precedence than the associated normal version
+// true
+bool res = ver1 < ver2;
+// true, because pre-release versions have lower precedence than the associated normal version
+res = ver1 > ver3;
 ```
 
-You can find the full getting started guide in the [docs/getting-started.md](docs/getting-started.md) file.
+You can find the full getting started guide in the [docs/getting-started.md](docs/getting-started.md) file and more examples in the [examples](examples) directory.
 
 ## Development documentation
 

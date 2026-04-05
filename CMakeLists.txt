@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Options
 option(VERSO_BUILD_TESTS "Build the tests." OFF)
+option(VERSO_BUILD_EXAMPLES "Build the examples." OFF)
 
 set(VERSO_INCLUDE_FILES
     include/verso/verso.hpp
@@ -24,4 +25,8 @@ target_include_directories(verso INTERFACE include)
 if (VERSO_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+if (VERSO_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()

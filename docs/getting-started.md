@@ -2,6 +2,8 @@
 
 Getting started with Verso is easy. After you configured your environment, either by cloning the repository, adding it as a submodule, or downloading the header file, you can start using it in your C++ projects.
 
+You can find example projects in the `examples` directory to see how to use the library in different scenarios.
+
 ## Basic Usage
 
 Include the Verso header file in your C++ source code:
