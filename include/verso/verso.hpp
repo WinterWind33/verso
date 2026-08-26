@@ -665,7 +665,7 @@ constexpr auto components(const Version auto& version) {
  *  To honor this library, when not in development, the library version will always be represented
  *  only by a "version" object.
  */
-constexpr version verso_version{0, 3, 0};
+constexpr version verso_version{0, 3, 1};
 
 // ### Comparison operators ###
 // Reference: https://semver.org/#spec-item-11

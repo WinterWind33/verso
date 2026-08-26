@@ -16,7 +16,7 @@ namespace verso::tests {
 
 static_assert(verso_version.major() == 0);
 static_assert(verso_version.minor() == 3);
-static_assert(verso_version.patch() == 0);
+static_assert(verso_version.patch() == 1);
 
 namespace library_implementation_tests {
 
