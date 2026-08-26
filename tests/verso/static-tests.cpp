@@ -4,6 +4,13 @@
 // C++ STL
 #include <string_view>
 
+// clang rejects the destructor of a std::optional holding non-trivially-destructible members
+// inside a constant expression when the MSVC STL is in use. Assertions that evaluate such an
+// optional cannot be compiled in that configuration.
+#if defined(__clang__) && defined(_MSC_VER)
+#define VERSO_NO_CONSTEXPR_NON_TRIVIAL_OPTIONAL
+#endif
+
 // This file is used to perform static assertions on concepts and other compile-time
 namespace verso::tests {
 
@@ -193,5 +200,16 @@ static_assert(std::get<2>(components(constant_version{1, 2, 3, "alpha", "build"}
 static_assert(std::get<3>(components(constant_version{1, 2, 3, "alpha", "build"})) == "alpha");
 static_assert(std::get<4>(components(constant_version{1, 2, 3, "alpha", "build"})) == "build");
 } // namespace components_function_tests
+
+#ifndef VERSO_NO_CONSTEXPR_NON_TRIVIAL_OPTIONAL
+namespace from_string_function_tests {
+static_assert(from_string<version>("") == std::nullopt);
+static_assert(from_string<version>("1") == std::nullopt);
+static_assert(from_string<version>("1.0") == std::nullopt);
+static_assert(from_string<version>("1.0.0.0") == std::nullopt);
+static_assert(from_string<version>("....") == std::nullopt);
+static_assert(from_string<version>("junk-data") == std::nullopt);
+} // namespace from_string_function_tests
+#endif // VERSO_NO_CONSTEXPR_NON_TRIVIAL_OPTIONAL
 
 } // namespace verso::tests
