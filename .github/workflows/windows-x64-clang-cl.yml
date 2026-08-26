@@ -1,0 +1,29 @@
+# Copyright (c) 2025-2026 Andrea Ballestrazzi
+name: Windows x64 Clang-CL Build
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build-type: [Release, Debug]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DVERSO_BUILD_TESTS=ON -DVERSO_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=${{ matrix['build-type'] }} -DCMAKE_CXX_COMPILER=clang-cl
+
+      - name: Build all targets
+        run: cmake --build build --config ${{ matrix['build-type'] }}
+
+      - name: Run tests
+        run: |
+          .\build\tests\verso-tests.exe -S

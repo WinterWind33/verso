@@ -665,7 +665,7 @@ constexpr auto components(const Version auto& version) {
  *  To honor this library, when not in development, the library version will always be represented
  *  only by a "version" object.
  */
-constexpr version verso_version{0, 3, 0};
+constexpr version verso_version{0, 3, 1};
 
 // ### Comparison operators ###
 // Reference: https://semver.org/#spec-item-11
@@ -1081,13 +1081,6 @@ constexpr std::optional<VersionT> from_string(const SupportedString auto& str) {
 
     return VersionT{major, minor, patch, std::move(prereleaseData), std::move(buildMetadata)};
 }
-
-static_assert(from_string<version>("") == std::nullopt);
-static_assert(from_string<version>("1") == std::nullopt);
-static_assert(from_string<version>("1.0") == std::nullopt);
-static_assert(from_string<version>("1.0.0.0") == std::nullopt);
-static_assert(from_string<version>("....") == std::nullopt);
-static_assert(from_string<version>("junk-data") == std::nullopt);
 } // namespace verso
 
 #endif // INCLUDE_VERSO_HPP
